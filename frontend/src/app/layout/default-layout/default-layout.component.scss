@@ -1,0 +1,214 @@
+:host {
+  display: block;
+}
+
+.rbap-shell {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, transparent 100%);
+}
+
+.body {
+  min-width: 0;
+  padding-inline-start: var(--cui-sidebar-occupy-start, 0);
+  padding-inline-end: var(--cui-sidebar-occupy-end, 0);
+  transition:
+    padding-inline-start 0.15s ease,
+    padding-inline-end 0.15s ease;
+}
+
+.sidebar-brand-logo {
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: cover;
+  border-radius: 999px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.sidebar-brand-logo--narrow {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Brand text placed beside the full logo */
+.sidebar-brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+}
+
+.sidebar-brand-full.sidebar-brand-text {
+  display: inline-block;
+  font-weight: 800;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.96);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-left: 0.25rem;
+  max-width: 8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-brand-narrow.sidebar-brand-text {
+  display: none;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--cui-sidebar-zindex, 1035) - 1);
+  border: 0;
+  background: rgba(7, 14, 10, 0.34);
+  backdrop-filter: blur(2px);
+}
+
+.header-surface {
+  min-height: 4.5rem;
+}
+
+.header-leading {
+  flex-shrink: 0;
+}
+
+.header-meta {
+  color: var(--rbap-ink);
+}
+
+.header-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rbap-sidebar-accent);
+}
+
+.header-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.sidebar-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid rgba(22, 33, 24, 0.12);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--rbap-ink);
+  box-shadow: 0 10px 24px rgba(18, 28, 20, 0.08);
+}
+
+.sidebar-trigger__bars {
+  position: relative;
+  display: inline-block;
+  width: 1rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.sidebar-trigger__bars::before,
+.sidebar-trigger__bars::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 1rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.sidebar-trigger__bars::before {
+  top: -0.35rem;
+}
+
+.sidebar-trigger__bars::after {
+  top: 0.35rem;
+}
+
+.sidebar-trigger--desktop {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profile-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.header-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1d4129 0%, #2d5c3a 100%);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  box-shadow: 0 10px 24px rgba(29, 65, 41, 0.24);
+}
+
+.header-avatar-image {
+  display: block;
+  object-fit: cover;
+}
+
+.profile-menu {
+  min-width: 12rem;
+  border: 1px solid rgba(22, 33, 24, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 18px 36px rgba(18, 28, 20, 0.12);
+}
+
+.profile-menu__header {
+  padding: 0.25rem 1rem 0.75rem;
+}
+
+.profile-menu__label {
+  color: var(--rbap-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.profile-menu__name {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--rbap-ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.profile-menu__email {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--rbap-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 991.98px) {
+  .body {
+    padding-inline-start: 0;
+    padding-inline-end: 0;
+  }
+
+  /* Hide the brand text on small screens to preserve space */
+  .sidebar-brand-full.sidebar-brand-text {
+    display: none;
+  }
+}

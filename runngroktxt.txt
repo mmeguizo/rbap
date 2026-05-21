@@ -1,0 +1,8 @@
+ngrok http --url=unduly-enjoyed-parrot.ngrok-free.app 3000
+
+
+ - get manual token access = https://10.100.168.9:3000/api/v1/auth/google/callback
+
+
+
+ ngrok http --url=unduly-enjoyed-parrot.ngrok-free.app 3000

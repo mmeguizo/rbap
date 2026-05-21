@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap');
+@import '@coreui/coreui/dist/css/coreui.min.css';
+
+:root {
+  --rbap-ink: #162118;
+  --rbap-muted: #5d6d60;
+  --rbap-surface: #eef2ec;
+  --rbap-surface-strong: #f8faf7;
+  --rbap-sidebar: #17321f;
+  --rbap-sidebar-accent: #c6a552;
+  --rbap-border: rgba(22, 33, 24, 0.08);
+  --rbap-shadow: 0 24px 60px rgba(16, 24, 17, 0.12);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Public Sans', 'Segoe UI', sans-serif;
+  color: var(--rbap-ink);
+  background:
+    radial-gradient(circle at top left, rgba(198, 165, 82, 0.2), transparent 28%),
+    linear-gradient(180deg, #f7faf4 0%, var(--rbap-surface) 100%);
+}
+
+a {
+  color: inherit;
+}
+
+.sidebar {
+  --cui-sidebar-bg: var(--rbap-sidebar);
+  --cui-sidebar-brand-bg: rgba(0, 0, 0, 0.18);
+  --cui-sidebar-header-bg: rgba(0, 0, 0, 0.08);
+  --cui-sidebar-footer-bg: rgba(0, 0, 0, 0.12);
+  --cui-sidebar-nav-link-hover-bg: rgba(255, 255, 255, 0.08);
+  --cui-sidebar-nav-link-active-bg: rgba(198, 165, 82, 0.18);
+  --cui-sidebar-nav-link-active-color: #ffffff;
+}
+
+.header.header-sticky {
+  background: rgba(248, 250, 247, 0.88);
+  backdrop-filter: blur(14px);
+}

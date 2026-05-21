@@ -1,0 +1,33 @@
+<c-row class="g-4">
+  <c-col [xs]="12">
+    <nav class="dashboard-breadcrumb-wrap" aria-label="breadcrumb">
+      <c-breadcrumb>
+        <c-breadcrumb-item url="/dashboard">Home</c-breadcrumb-item>
+        <c-breadcrumb-item [active]="true">Dashboard</c-breadcrumb-item>
+      </c-breadcrumb>
+    </nav>
+  </c-col>
+
+  <c-col [xs]="12">
+    <section class="dashboard-hero">
+      <span class="dashboard-kicker">RBAP</span>
+      <h1>Dashboard</h1>
+      <p>
+        This is the blank admin dashboard shell. Backend-driven widgets, tables, and KPIs can be
+        added later without changing the frontend structure again.
+      </p>
+    </section>
+  </c-col>
+
+  <c-col [xs]="12">
+    <c-card class="dashboard-placeholder border-0 shadow-sm">
+      <c-card-body class="p-4 p-lg-5">
+        <h2 class="h4 mb-2">Ready for backend integration</h2>
+        <p class="text-body-secondary mb-0">
+          The sidebar, header, and route shell are in place. This view intentionally stays minimal
+          until you decide which backend endpoints should drive the first widgets.
+        </p>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

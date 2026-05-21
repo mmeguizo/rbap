@@ -1,0 +1,119 @@
+<c-sidebar
+  #sidebar="cSidebar"
+  class="d-print-none sidebar sidebar-fixed border-end"
+  colorScheme="dark"
+  id="rbap-sidebar"
+  visible
+>
+  <c-sidebar-header class="border-bottom">
+    <c-sidebar-brand [routerLink]="['/dashboard']" class="sidebar-brand-wrapper">
+      <img alt="CHMSU Logo" class="sidebar-brand-full sidebar-brand-logo" [src]="logoUrl" />
+      <span class="sidebar-brand-full sidebar-brand-text">RBAP</span>
+
+      <img
+        alt="CHMSU Logo"
+        class="sidebar-brand-narrow sidebar-brand-logo sidebar-brand-logo--narrow"
+        [src]="logoUrl"
+      />
+    </c-sidebar-brand>
+  </c-sidebar-header>
+
+  <c-sidebar-nav [navItems]="navItems" compact dropdownMode="close" />
+
+  @if (!sidebar.narrow) {
+    <c-sidebar-footer
+      cSidebarToggle="rbap-sidebar"
+      class="border-top d-none d-lg-flex"
+      toggle="unfoldable"
+      style="cursor: pointer"
+    >
+      <button cSidebarToggler aria-label="Toggle sidebar width"></button>
+    </c-sidebar-footer>
+  }
+</c-sidebar>
+
+@if (sidebar.visible) {
+  <button
+    cSidebarToggle="rbap-sidebar"
+    aria-label="Close sidebar"
+    class="sidebar-backdrop d-lg-none"
+    type="button"
+  ></button>
+}
+
+<div class="wrapper d-flex flex-column min-vh-100 rbap-shell">
+  <c-header class="header header-sticky mb-4 p-0 shadow-sm" position="sticky">
+    <div
+      class="container-fluid px-4 px-lg-5 border-bottom header-surface d-flex align-items-center"
+    >
+      <div class="header-leading d-flex align-items-center gap-2">
+        <button
+          cSidebarToggle="rbap-sidebar"
+          aria-label="Open sidebar"
+          class="sidebar-trigger d-lg-none"
+          type="button"
+        >
+          <span class="sidebar-trigger__bars" aria-hidden="true"></span>
+        </button>
+
+        <button
+          cSidebarToggle="rbap-sidebar"
+          toggle="unfoldable"
+          aria-label="Collapse sidebar"
+          class="sidebar-trigger sidebar-trigger--desktop d-none d-lg-inline-flex"
+          type="button"
+        >
+          <span class="sidebar-trigger__bars" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="ms-auto d-flex align-items-center gap-3 header-meta">
+        <span class="header-title-block d-none d-sm-flex flex-column text-end">
+          <span class="header-eyebrow">RBAP</span>
+          <span class="header-title">{{ displayName() }}</span>
+        </span>
+
+        <c-dropdown alignment="end" placement="bottom-end" variant="nav-item">
+          <button
+            cDropdownToggle
+            [caret]="false"
+            aria-label="Open profile menu"
+            class="profile-toggle"
+            type="button"
+          >
+            @if (avatarUrl(); as profilePhotoUrl) {
+              <img
+                [alt]="displayName()"
+                [src]="profilePhotoUrl"
+                class="header-avatar header-avatar-image"
+              />
+            } @else {
+              <span class="header-avatar">{{ userInitials() }}</span>
+            }
+          </button>
+
+          <div cDropdownMenu class="profile-menu pt-2 pb-2">
+            <div cDropdownHeader class="profile-menu__header">
+              <span class="profile-menu__label">Account</span>
+              <span class="profile-menu__name">{{ displayName() }}</span>
+              <span class="profile-menu__email">{{
+                currentUser()?.email ?? 'No email available'
+              }}</span>
+            </div>
+            <button cDropdownItem type="button">Profile</button>
+            <button cDropdownItem type="button">Settings</button>
+            <button cDropdownItem type="button">Notifications</button>
+            <hr class="dropdown-divider my-2" />
+            <button cDropdownItem type="button" (click)="logout()">Logout</button>
+          </div>
+        </c-dropdown>
+      </div>
+    </div>
+  </c-header>
+
+  <div class="body flex-grow-1">
+    <div class="container-fluid px-4 px-lg-5 pb-4">
+      <router-outlet />
+    </div>
+  </div>
+</div>
