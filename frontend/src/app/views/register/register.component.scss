@@ -2,7 +2,7 @@
   display: block;
 }
 
-.login-shell {
+.register-shell {
   background:
     radial-gradient(circle at top left, rgba(198, 165, 82, 0.24), transparent 24%),
     radial-gradient(circle at top right, rgba(22, 58, 34, 0.12), transparent 30%),
@@ -10,7 +10,7 @@
     linear-gradient(145deg, #f8faf6 0%, #edf2ea 52%, #e7ede4 100%);
 }
 
-.login-card {
+.register-card {
   position: relative;
   border-radius: 1.75rem;
   background: rgba(255, 255, 255, 0.9);
@@ -18,7 +18,7 @@
   box-shadow: 0 30px 80px rgba(18, 28, 20, 0.14);
 }
 
-.login-badge {
+.register-badge {
   align-items: center;
   width: fit-content;
   padding: 0.45rem 0.9rem;
@@ -31,7 +31,7 @@
   text-transform: uppercase;
 }
 
-.login-card-glow {
+.register-card-glow {
   position: absolute;
   inset: -4rem auto auto 50%;
   width: 11rem;
@@ -42,19 +42,19 @@
   pointer-events: none;
 }
 
-.login-header {
+.register-header {
   position: relative;
   z-index: 1;
 }
 
-.login-brand {
+.register-brand {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.9rem;
 }
 
-.login-logo {
+.register-logo {
   width: 5rem;
   height: 5rem;
   object-fit: cover;
@@ -63,7 +63,7 @@
   box-shadow: 0 16px 34px rgba(18, 28, 20, 0.12);
 }
 
-.login-copy {
+.register-copy {
   max-width: 28rem;
   margin-inline: auto;
   color: var(--rbap-muted);
@@ -77,7 +77,7 @@
   font-weight: 600;
 }
 
-.login-input {
+.register-input {
   min-height: 3.5rem;
   border: 1px solid rgba(22, 33, 24, 0.1);
   border-radius: 1rem;
@@ -85,12 +85,12 @@
   box-shadow: none;
 }
 
-// When the input is inside an input-group, only round the left side
-.input-group .login-input {
+// Inside an input-group, only round the left side
+.input-group .register-input {
   border-radius: 1rem 0 0 1rem;
 }
 
-.login-input:focus {
+.register-input:focus {
   border-color: rgba(23, 50, 31, 0.35);
   background: #ffffff;
   box-shadow: 0 0 0 0.25rem rgba(23, 50, 31, 0.08);
@@ -115,12 +115,12 @@
   }
 }
 
-// When the input inside an input-group is invalid, also style the toggle button
-.input-group:has(.login-input.is-invalid) .password-toggle {
+// When the input inside an input-group is invalid, also flag the toggle button border
+.input-group:has(.register-input.is-invalid) .password-toggle {
   border-color: var(--bs-form-invalid-border-color);
 }
 
-.login-button {
+.register-button {
   min-height: 3.5rem;
   border: 0;
   border-radius: 1rem;
@@ -128,46 +128,22 @@
   box-shadow: 0 16px 32px rgba(23, 50, 31, 0.22);
 }
 
-.google-login-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.8rem;
+.google-verify-button {
   min-height: 3.5rem;
-  border: 1px solid rgba(22, 33, 24, 0.1);
   border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--rbap-ink);
+  border-color: rgba(23, 50, 31, 0.18);
+  color: #17321f;
   font-weight: 600;
 }
 
-.google-login-button:hover {
-  background: #ffffff;
-  border-color: rgba(22, 33, 24, 0.16);
-}
-
-.google-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.google-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.dashboard-preview {
-  text-align: center;
+.google-verify-copy,
+.register-helper-text {
   color: var(--rbap-muted);
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.88rem;
 }
 
 @media (max-width: 991.98px) {
-  .login-card {
+  .register-card {
     border-radius: 1.25rem;
   }
 }

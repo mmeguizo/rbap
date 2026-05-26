@@ -201,6 +201,25 @@
   font-size: 0.8rem;
 }
 
+.profile-menu__action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.profile-menu__action--disabled {
+  color: var(--rbap-muted);
+  opacity: 0.72;
+}
+
+.profile-menu__soon {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 @media (max-width: 991.98px) {
   .body {
     padding-inline-start: 0;

@@ -1,8 +1,8 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { DropdownModule, HeaderModule, SidebarModule } from '@coreui/angular';
+import { DropdownModule, HeaderModule, INavData, SidebarModule } from '@coreui/angular';
 
-import { navItems } from './_nav';
+import { navItems as baseNavItems } from './_nav';
 import { AuthService } from '../../core/services/auth.service';
 import { getUserInitials } from '../../shared/utils/user.utils';
 
@@ -14,8 +14,8 @@ import { getUserInitials } from '../../shared/utils/user.utils';
 })
 export class DefaultLayoutComponent {
   private readonly authService = inject(AuthService);
+  private readonly failedAvatarUrl = signal<string | null>(null);
 
-  protected readonly navItems = navItems;
   protected readonly logoUrl = '/chmsu-min.jpg';
 
   /**
@@ -24,6 +24,19 @@ export class DefaultLayoutComponent {
    * Used in the template to show the user's name and role.
    */
   protected readonly currentUser = this.authService.currentUser;
+
+  protected readonly navItems = computed((): INavData[] => {
+    const items = [...baseNavItems];
+
+    if (this.currentUser()?.role === 'ADMIN') {
+      items.push({
+        name: 'User Management',
+        url: '/admin/users',
+      });
+    }
+
+    return items;
+  });
 
   /**
    * A stable display label for the header.
@@ -44,6 +57,11 @@ export class DefaultLayoutComponent {
     return avatar ? avatar : null;
   });
 
+  protected readonly resolvedAvatarUrl = computed(() => {
+    const avatar = this.avatarUrl();
+    return avatar && avatar !== this.failedAvatarUrl() ? avatar : null;
+  });
+
   /**
    * Computed signal: derives 1–2 letter initials from the user's full name.
    * Updates automatically when currentUser changes.
@@ -54,6 +72,15 @@ export class DefaultLayoutComponent {
     if (!user) return '?';
     return getUserInitials(user.name);
   });
+
+  protected markHeaderAvatarBroken(): void {
+    const avatar = this.avatarUrl();
+    if (!avatar) {
+      return;
+    }
+
+    this.failedAvatarUrl.set(avatar);
+  }
 
   /**
    * Logs the user out and redirects to /login.

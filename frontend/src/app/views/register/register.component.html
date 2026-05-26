@@ -1,0 +1,292 @@
+<div class="register-shell min-vh-100 d-flex align-items-center py-4 py-lg-5">
+  <c-container>
+    <c-row class="justify-content-center">
+      <c-col [xs]="12" [md]="10" [lg]="8" [xl]="6">
+        <c-card class="register-card border-0 overflow-hidden">
+          <c-card-body class="p-4 p-md-5">
+            <!-- Error alert — shown when backend rejects the registration -->
+            @if (errorMessage) {
+              <c-alert color="danger" [dismissible]="true" (visibleChange)="dismissError()" fade>
+                <strong>Registration failed:</strong> {{ errorMessage }}
+              </c-alert>
+            }
+
+            @if (isVerifyingGoogle) {
+              <c-alert color="info" fade>
+                <strong>Verifying Google account:</strong> please wait while we confirm your
+                <strong>@chmsu.edu.ph</strong> email.
+              </c-alert>
+            } @else if (hasVerifiedGoogleIdentity) {
+              <c-alert color="success" fade>
+                <strong>Email verified:</strong> your Google account has been confirmed. Finish the
+                form below to create your RBAP account.
+              </c-alert>
+            } @else {
+              <c-alert color="info" fade>
+                <strong>Security check:</strong> new accounts must be verified with Google first so
+                we know the <strong>@chmsu.edu.ph</strong> email really belongs to you.
+              </c-alert>
+            }
+
+            <div class="register-card-glow"></div>
+
+            <!-- Header -->
+            <div class="register-header mb-4 text-center">
+              <div class="register-brand mb-3">
+                <img alt="CHMSU Logo" class="register-logo" [src]="logoUrl" />
+                <span class="register-badge d-inline-flex">RBAP</span>
+              </div>
+              <h1 class="h2 mb-2">Create an Account</h1>
+              <p class="register-copy mb-0">
+                We verify your <strong>@chmsu.edu.ph</strong> account with Google first, then you
+                set your local RBAP password to finish registration.
+              </p>
+            </div>
+
+            @if (!hasVerifiedGoogleIdentity) {
+              <div class="d-grid gap-2 mb-4">
+                <button
+                  class="btn btn-outline-dark btn-lg google-verify-button"
+                  type="button"
+                  (click)="verifyWithGoogle()"
+                  [disabled]="isVerifyingGoogle || isLoading"
+                >
+                  Continue with Google
+                </button>
+                <p class="google-verify-copy mb-0 text-center">
+                  After Google confirms your school email, this form will come back prefilled.
+                </p>
+              </div>
+            }
+
+            <!-- ── Registration form ── -->
+            <form [formGroup]="registerForm" (ngSubmit)="register()">
+              <!-- Full name -->
+              <div class="mb-3">
+                <label class="form-label" for="reg-name">Full name</label>
+                <input
+                  id="reg-name"
+                  class="form-control form-control-lg register-input"
+                  [class.is-invalid]="nameControl?.invalid && nameControl?.touched"
+                  type="text"
+                  placeholder="e.g. Juan dela Cruz"
+                  autocomplete="name"
+                  formControlName="name"
+                />
+                @if (nameControl?.invalid && nameControl?.touched) {
+                  <div class="invalid-feedback">
+                    @if (nameControl?.errors?.['required']) {
+                      Full name is required.
+                    } @else if (nameControl?.errors?.['minlength']) {
+                      Name must be at least 3 characters.
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Email — CHMSU domain only -->
+              <div class="mb-3">
+                <label class="form-label" for="reg-email">Email address</label>
+                <input
+                  id="reg-email"
+                  class="form-control form-control-lg register-input"
+                  [class.is-invalid]="emailControl?.invalid && emailControl?.touched"
+                  type="email"
+                  placeholder="name@chmsu.edu.ph"
+                  autocomplete="email"
+                  [readOnly]="hasVerifiedGoogleIdentity"
+                  formControlName="email"
+                />
+                @if (hasVerifiedGoogleIdentity) {
+                  <div class="form-text register-helper-text">
+                    This email came from a verified Google sign-in and cannot be changed here.
+                  </div>
+                }
+                @if (emailControl?.invalid && emailControl?.touched) {
+                  <div class="invalid-feedback">
+                    @if (emailControl?.errors?.['required']) {
+                      Email is required.
+                    } @else if (emailControl?.errors?.['email']) {
+                      Enter a valid email address.
+                    } @else if (emailControl?.errors?.['chmsuDomain']) {
+                      Only <strong>@chmsu.edu.ph</strong> email addresses are allowed.
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Password with eye-toggle -->
+              <div class="mb-3">
+                <label class="form-label" for="reg-password">Password</label>
+                <div class="input-group">
+                  <input
+                    id="reg-password"
+                    class="form-control form-control-lg register-input"
+                    [class.is-invalid]="passwordControl?.invalid && passwordControl?.touched"
+                    [type]="showPassword ? 'text' : 'password'"
+                    placeholder="At least 8 characters"
+                    autocomplete="new-password"
+                    formControlName="password"
+                  />
+                  <button
+                    class="btn btn-outline-secondary password-toggle"
+                    type="button"
+                    (click)="togglePassword()"
+                    [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                    tabindex="-1"
+                  >
+                    @if (showPassword) {
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"
+                        />
+                        <path
+                          d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"
+                        />
+                        <path
+                          d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"
+                        />
+                      </svg>
+                    } @else {
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"
+                        />
+                        <path
+                          d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"
+                        />
+                      </svg>
+                    }
+                  </button>
+                  @if (passwordControl?.invalid && passwordControl?.touched) {
+                    <div class="invalid-feedback">
+                      @if (passwordControl?.errors?.['required']) {
+                        Password is required.
+                      } @else if (passwordControl?.errors?.['minlength']) {
+                        Password must be at least 8 characters.
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Confirm password with eye-toggle -->
+              <div class="mb-4">
+                <label class="form-label" for="reg-confirm-password">Confirm password</label>
+                <div class="input-group">
+                  <input
+                    id="reg-confirm-password"
+                    class="form-control form-control-lg register-input"
+                    [class.is-invalid]="
+                      (confirmPasswordControl?.invalid && confirmPasswordControl?.touched) ||
+                      (registerForm.errors?.['passwordMismatch'] && confirmPasswordControl?.touched)
+                    "
+                    [type]="showConfirmPassword ? 'text' : 'password'"
+                    placeholder="Re-enter your password"
+                    autocomplete="new-password"
+                    formControlName="confirmPassword"
+                  />
+                  <button
+                    class="btn btn-outline-secondary password-toggle"
+                    type="button"
+                    (click)="toggleConfirmPassword()"
+                    [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'"
+                    tabindex="-1"
+                  >
+                    @if (showConfirmPassword) {
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"
+                        />
+                        <path
+                          d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"
+                        />
+                        <path
+                          d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"
+                        />
+                      </svg>
+                    } @else {
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"
+                        />
+                        <path
+                          d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"
+                        />
+                      </svg>
+                    }
+                  </button>
+                  @if (
+                    (confirmPasswordControl?.invalid && confirmPasswordControl?.touched) ||
+                    (registerForm.errors?.['passwordMismatch'] && confirmPasswordControl?.touched)
+                  ) {
+                    <div class="invalid-feedback">
+                      @if (confirmPasswordControl?.errors?.['required']) {
+                        Please confirm your password.
+                      } @else if (registerForm.errors?.['passwordMismatch']) {
+                        Passwords do not match.
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="d-grid gap-3">
+                <!-- Create account button — shows spinner while loading -->
+                <button
+                  class="btn btn-primary btn-lg register-button"
+                  type="submit"
+                  [disabled]="isLoading || isVerifyingGoogle || !hasVerifiedGoogleIdentity"
+                >
+                  @if (isLoading) {
+                    <span
+                      class="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Creating account…
+                  } @else {
+                    Create account
+                  }
+                </button>
+
+                <p class="text-center mb-0" style="font-size: 0.92rem; color: var(--rbap-muted)">
+                  Already have an account?
+                  <a routerLink="/login" class="fw-semibold" style="color: #17321f">Sign in</a>
+                </p>
+              </div>
+            </form>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  </c-container>
+</div>

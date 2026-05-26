@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { UserProfile } from '../../types/auth.types';
+import { GoogleRegistrationContext, TokenResponse, UserProfile } from '../../types/auth.types';
 
 // ─────────────────────────────────────────────
 // localStorage key constants
@@ -47,6 +47,91 @@ export class AuthService {
    */
   loginWithGoogle(): void {
     window.location.href = `${environment.apiUrl}/auth/google`;
+  }
+
+  // ──────────────────────────────────────────────────
+  // Step 1b of login: email + password login
+  // ──────────────────────────────────────────────────
+
+  /**
+   * Logs in using an email address and password.
+   *
+   * Calls POST /auth/password-login on the backend.
+   * On success, stores the tokens and fetches the user profile
+   * exactly the same way as the Google OAuth callback does.
+   *
+   * Throws an HttpErrorResponse if the credentials are wrong
+   * or the account is not found — the caller should catch and display the error.
+   */
+  async loginWithCredentials(email: string, password: string): Promise<void> {
+    const result = await firstValueFrom(
+      this.http.post<{ access_token: string; refresh_token: string }>(
+        `${environment.apiUrl}/auth/password-login`,
+        { email, password },
+      ),
+    );
+    await this.handleCallback(result.access_token, result.refresh_token);
+  }
+
+  /**
+   * Registers a new user account.
+   *
+   * Calls POST /auth/register with a short-lived Google verification token.
+   * The backend verifies that the email came from a real Google OAuth callback,
+   * then creates the user and returns a fresh token pair.
+   *
+   * On success this method stores the tokens and loads GET /auth/me,
+   * so the caller can navigate straight into the app.
+   */
+  async register(
+    name: string,
+    email: string,
+    password: string,
+    googleRegistrationToken: string,
+  ): Promise<void> {
+    const result = await firstValueFrom(
+      this.http.post<TokenResponse>(`${environment.apiUrl}/auth/register`, {
+        name,
+        email,
+        password,
+        googleRegistrationToken,
+      }),
+    );
+
+    await this.handleCallback(result.access_token, result.refresh_token);
+  }
+
+  /**
+   * Resolves a backend-issued Google registration token into safe prefill data.
+   * The server remains the source of truth for the verified email address.
+   */
+  async getGoogleRegistrationContext(token: string): Promise<GoogleRegistrationContext> {
+    return await firstValueFrom(
+      this.http.get<GoogleRegistrationContext>(
+        `${environment.apiUrl}/auth/google-registration-context?token=${encodeURIComponent(token)}`,
+      ),
+    );
+  }
+
+  /**
+   * Sets or replaces the current user's local password.
+   *
+   * Calls POST /auth/set-password with the new password.
+   * After the write succeeds, it refreshes GET /auth/me so the frontend
+   * immediately reflects that password login is now enabled.
+   */
+  async setPassword(password: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<void>(`${environment.apiUrl}/auth/set-password`, { password }),
+    );
+
+    const freshUser = await this.fetchMe();
+    if (!freshUser) {
+      throw new Error('Password updated, but the refreshed user profile could not be loaded.');
+    }
+
+    this.saveUser(freshUser);
+    this.currentUser.set(freshUser);
   }
 
   // ──────────────────────────────────────────────────

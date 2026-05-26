@@ -18,7 +18,7 @@
     </c-sidebar-brand>
   </c-sidebar-header>
 
-  <c-sidebar-nav [navItems]="navItems" compact dropdownMode="close" />
+  <c-sidebar-nav [navItems]="navItems()" compact dropdownMode="close" />
 
   @if (!sidebar.narrow) {
     <c-sidebar-footer
@@ -81,11 +81,12 @@
             class="profile-toggle"
             type="button"
           >
-            @if (avatarUrl(); as profilePhotoUrl) {
+            @if (resolvedAvatarUrl(); as profilePhotoUrl) {
               <img
                 [alt]="displayName()"
                 [src]="profilePhotoUrl"
                 class="header-avatar header-avatar-image"
+                (error)="markHeaderAvatarBroken()"
               />
             } @else {
               <span class="header-avatar">{{ userInitials() }}</span>
@@ -100,9 +101,28 @@
                 currentUser()?.email ?? 'No email available'
               }}</span>
             </div>
-            <button cDropdownItem type="button">Profile</button>
-            <button cDropdownItem type="button">Settings</button>
-            <button cDropdownItem type="button">Notifications</button>
+            <a cDropdownItem [routerLink]="['/profile']">Profile</a>
+            <button
+              cDropdownItem
+              class="profile-menu__action profile-menu__action--disabled"
+              type="button"
+              disabled
+            >
+              <span>Settings</span>
+              <span class="profile-menu__soon">Coming soon</span>
+            </button>
+            <button
+              cDropdownItem
+              class="profile-menu__action profile-menu__action--disabled"
+              type="button"
+              disabled
+            >
+              <span>Notifications</span>
+              <span class="profile-menu__soon">Coming soon</span>
+            </button>
+            @if (currentUser()?.role === 'ADMIN') {
+              <a cDropdownItem [routerLink]="['/admin/users']">User Management</a>
+            }
             <hr class="dropdown-divider my-2" />
             <button cDropdownItem type="button" (click)="logout()">Logout</button>
           </div>

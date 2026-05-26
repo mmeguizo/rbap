@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminRoleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -15,6 +16,15 @@ export const routes: Routes = [
       import('./views/login/login.component').then((module) => module.LoginComponent),
     data: {
       title: 'Login to RBAP',
+    },
+  },
+  {
+    // Register page — public, no guard
+    path: 'register',
+    loadComponent: () =>
+      import('./views/register/register.component').then((module) => module.RegisterComponent),
+    data: {
+      title: 'Create an Account',
     },
   },
   {
@@ -45,6 +55,23 @@ export const routes: Routes = [
           ),
         data: {
           title: 'Dashboard',
+        },
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./views/profile/profile.component').then((module) => module.ProfileComponent),
+        data: {
+          title: 'Profile',
+        },
+      },
+      {
+        path: 'admin/users',
+        canActivate: [adminRoleGuard],
+        loadComponent: () =>
+          import('./views/admin/users/users.component').then((module) => module.UsersComponent),
+        data: {
+          title: 'User Management',
         },
       },
     ],

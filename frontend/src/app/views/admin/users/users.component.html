@@ -1,0 +1,688 @@
+<c-row class="g-4">
+  <c-col [xs]="12">
+    <section class="users-hero">
+      <div>
+        <span class="users-kicker">Admin</span>
+        <h1>User management</h1>
+        <p class="mb-0">
+          This page uses the admin <strong>/user</strong> endpoints to create accounts, search by ID
+          or email, change roles, assign departments, promote directors, and soft delete access.
+        </p>
+      </div>
+
+      <button class="btn btn-primary users-hero__action" type="button" (click)="openCreateModal()">
+        Create user
+      </button>
+    </section>
+  </c-col>
+
+  <c-col [xs]="12">
+    @if (successMessage) {
+      <c-alert color="success" [dismissible]="true" (visibleChange)="dismissSuccess()" fade>
+        <strong>Success:</strong> {{ successMessage }}
+      </c-alert>
+    }
+
+    @if (errorMessage) {
+      <c-alert color="danger" [dismissible]="true" (visibleChange)="dismissError()" fade>
+        <strong>Action failed:</strong> {{ errorMessage }}
+      </c-alert>
+    }
+  </c-col>
+
+  <c-col [xs]="12" [xl]="4">
+    <c-card class="users-card border-0">
+      <c-card-body class="p-4">
+        <div class="users-card__intro mb-4">
+          <h2 class="h5 mb-1">Lookup user</h2>
+          <p class="mb-0">
+            Uses <strong>/user/user-id</strong> and <strong>/user/user-email</strong>.
+          </p>
+        </div>
+
+        <form [formGroup]="lookupByIdForm" (ngSubmit)="searchById()" class="mb-4">
+          <label class="form-label" for="lookup-user-id">User ID</label>
+          <div class="input-group">
+            <input
+              id="lookup-user-id"
+              class="form-control users-input"
+              [class.is-invalid]="
+                lookupByIdForm.get('userId')?.invalid && lookupByIdForm.get('userId')?.touched
+              "
+              type="text"
+              placeholder="cm..."
+              formControlName="userId"
+            />
+            <button class="btn btn-outline-secondary" type="submit" [disabled]="isLookupLoading">
+              Find
+            </button>
+          </div>
+        </form>
+
+        <form [formGroup]="lookupByEmailForm" (ngSubmit)="searchByEmail()" class="mb-4">
+          <label class="form-label" for="lookup-email">CHMSU email</label>
+          <div class="input-group">
+            <input
+              id="lookup-email"
+              class="form-control users-input"
+              [class.is-invalid]="
+                lookupByEmailForm.get('email')?.invalid && lookupByEmailForm.get('email')?.touched
+              "
+              type="email"
+              placeholder="name@chmsu.edu.ph"
+              formControlName="email"
+            />
+            <button class="btn btn-outline-secondary" type="submit" [disabled]="isLookupLoading">
+              Find
+            </button>
+          </div>
+        </form>
+
+        @if (lookupUser) {
+          <div class="lookup-result">
+            <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+              <div class="d-flex align-items-start gap-3">
+                @if (hasUsableAvatar(lookupUser)) {
+                  <c-avatar
+                    class="users-avatar users-avatar--lookup"
+                    shape="rounded-circle"
+                    size="xl"
+                  >
+                    <img
+                      class="avatar-img"
+                      [src]="lookupUser.avatar!"
+                      [alt]="lookupUser.name"
+                      (error)="markAvatarBroken(lookupUser)"
+                    />
+                  </c-avatar>
+                } @else {
+                  <c-avatar
+                    class="users-avatar users-avatar--lookup"
+                    color="primary"
+                    shape="rounded-circle"
+                    size="xl"
+                  >
+                    {{ initialsForUser(lookupUser) }}
+                  </c-avatar>
+                }
+
+                <div>
+                  <h3 class="h6 mb-1">{{ lookupUser.name }}</h3>
+                  <p class="mb-0 text-body-secondary">{{ lookupUser.email }}</p>
+                </div>
+              </div>
+
+              <button class="btn btn-sm btn-link p-0" type="button" (click)="clearLookup()">
+                Clear
+              </button>
+            </div>
+
+            <dl class="lookup-result__meta mb-0">
+              <div>
+                <dt>Role</dt>
+                <dd>
+                  <c-badge [color]="roleBadgeColor(lookupUser.role)">
+                    {{ formatUserRole(lookupUser.role) }}
+                  </c-badge>
+                </dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>
+                  <c-badge [color]="lookupUser.status === 'ACTIVE' ? 'success' : 'secondary'">
+                    {{ lookupUser.status }}
+                  </c-badge>
+                </dd>
+              </div>
+              <div>
+                <dt>Department / Office</dt>
+                <dd>{{ lookupUser.office?.name ?? 'Unassigned' }}</dd>
+              </div>
+            </dl>
+          </div>
+        } @else {
+          <div class="lookup-empty">
+            <p class="mb-0 text-body-secondary">
+              Search results appear here when you look up a user by ID or email.
+            </p>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col [xs]="12" [xl]="8">
+    <c-card class="users-card border-0">
+      <c-card-body class="p-4">
+        <div class="users-table__header mb-3">
+          <div>
+            <h2 class="h5 mb-1">All users</h2>
+            <p class="mb-0">Backed by <strong>GET /user</strong> with take / skip pagination.</p>
+          </div>
+
+          <div class="users-pagination">
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              (click)="previousPage()"
+              [disabled]="skip === 0 || isLoading"
+            >
+              Previous
+            </button>
+            <span class="users-pagination__meta">
+              {{ users.length ? skip + 1 : 0 }}-{{ skip + users.length }}
+            </span>
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              (click)="nextPage()"
+              [disabled]="users.length < take || isLoading"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        @if (isLoading) {
+          <div class="users-loading text-center py-5">
+            <span class="spinner-border text-secondary" role="status" aria-hidden="true"></span>
+            <p class="mt-3 mb-0 text-body-secondary">Loading users...</p>
+          </div>
+        } @else if (users.length === 0) {
+          <div class="users-empty">
+            <h3 class="h6 mb-2">No users found</h3>
+            <p class="mb-0 text-body-secondary">The current page returned no user records.</p>
+          </div>
+        } @else {
+          <div class="table-responsive d-none d-lg-block">
+            <table class="table align-middle users-table mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Department / Office</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of users; track user.id) {
+                  <tr>
+                    <td>
+                      <div class="users-user-cell">
+                        @if (hasUsableAvatar(user)) {
+                          <c-avatar class="users-avatar" shape="rounded-circle">
+                            <img
+                              class="avatar-img"
+                              [src]="user.avatar!"
+                              [alt]="user.name"
+                              (error)="markAvatarBroken(user)"
+                            />
+                          </c-avatar>
+                        } @else {
+                          <c-avatar class="users-avatar" color="primary" shape="rounded-circle">
+                            {{ initialsForUser(user) }}
+                          </c-avatar>
+                        }
+
+                        <div>
+                          <div class="fw-semibold">{{ user.name }}</div>
+                          <div class="small text-body-secondary">{{ user.id }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                      <c-badge [color]="roleBadgeColor(user.role)">
+                        {{ formatUserRole(user.role) }}
+                      </c-badge>
+                    </td>
+                    <td>
+                      {{ user.office?.name ?? 'Unassigned' }}
+                    </td>
+                    <td>
+                      <c-badge [color]="user.status === 'ACTIVE' ? 'success' : 'secondary'">
+                        {{ user.status }}
+                      </c-badge>
+                    </td>
+                    <td class="text-end">
+                      <div class="users-actions">
+                        <button
+                          class="btn btn-sm btn-outline-secondary"
+                          type="button"
+                          (click)="openAssignOfficeModal(user)"
+                          [disabled]="!canManageUser(user)"
+                        >
+                          Department
+                        </button>
+                        <button
+                          class="btn btn-sm btn-outline-secondary"
+                          type="button"
+                          (click)="openChangeRoleModal(user)"
+                          [disabled]="!canManageUser(user)"
+                        >
+                          Role
+                        </button>
+                        @if (user.status === 'ACTIVE') {
+                          <button
+                            class="btn btn-sm btn-outline-danger"
+                            type="button"
+                            (click)="openDeleteModal(user)"
+                          >
+                            Soft delete
+                          </button>
+                        } @else {
+                          <button
+                            class="btn btn-sm btn-outline-success"
+                            type="button"
+                            (click)="restoreUser(user)"
+                          >
+                            Restore
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="users-mobile-list d-grid d-lg-none">
+            @for (user of users; track user.id) {
+              <article class="users-mobile-card">
+                <div class="users-mobile-card__top">
+                  <div class="users-user-cell">
+                    @if (hasUsableAvatar(user)) {
+                      <c-avatar
+                        class="users-avatar users-avatar--mobile"
+                        shape="rounded-circle"
+                        size="lg"
+                      >
+                        <img
+                          class="avatar-img"
+                          [src]="user.avatar!"
+                          [alt]="user.name"
+                          (error)="markAvatarBroken(user)"
+                        />
+                      </c-avatar>
+                    } @else {
+                      <c-avatar
+                        class="users-avatar users-avatar--mobile"
+                        color="primary"
+                        shape="rounded-circle"
+                        size="lg"
+                      >
+                        {{ initialsForUser(user) }}
+                      </c-avatar>
+                    }
+
+                    <div>
+                      <div class="fw-semibold">{{ user.name }}</div>
+                      <div class="small text-body-secondary">{{ user.email }}</div>
+                    </div>
+                  </div>
+
+                  <c-badge [color]="user.status === 'ACTIVE' ? 'success' : 'secondary'">
+                    {{ user.status }}
+                  </c-badge>
+                </div>
+
+                <div class="users-mobile-card__meta">
+                  <div>
+                    <span>Role</span>
+                    <strong>{{ formatUserRole(user.role) }}</strong>
+                  </div>
+                  <div>
+                    <span>Department / Office</span>
+                    <strong>{{ user.office?.name ?? 'Unassigned' }}</strong>
+                  </div>
+                  <div>
+                    <span>User ID</span>
+                    <strong>{{ user.id }}</strong>
+                  </div>
+                </div>
+
+                <div class="users-actions users-actions--mobile">
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    type="button"
+                    (click)="openAssignOfficeModal(user)"
+                    [disabled]="!canManageUser(user)"
+                  >
+                    Department
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    type="button"
+                    (click)="openChangeRoleModal(user)"
+                    [disabled]="!canManageUser(user)"
+                  >
+                    Role
+                  </button>
+                  @if (user.status === 'ACTIVE') {
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      type="button"
+                      (click)="openDeleteModal(user)"
+                    >
+                      Soft delete
+                    </button>
+                  } @else {
+                    <button
+                      class="btn btn-sm btn-outline-success"
+                      type="button"
+                      (click)="restoreUser(user)"
+                    >
+                      Restore
+                    </button>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col [xs]="12">
+    <c-card class="users-card border-0">
+      <c-card-body class="p-4">
+        <div class="users-card__intro d-flex align-items-start justify-content-between gap-3 mb-3">
+          <div>
+            <h2 class="h5 mb-1">Users without department / office</h2>
+            <p class="mb-0">Backed by <strong>GET /user/without-office</strong>.</p>
+          </div>
+          <span class="users-counter">{{ usersWithoutOffice.length }}</span>
+        </div>
+
+        @if (usersWithoutOffice.length === 0) {
+          <p class="mb-0 text-body-secondary">
+            Every user currently has a department / office assigned.
+          </p>
+        } @else {
+          <div cListGroup class="users-unassigned-list">
+            @for (user of usersWithoutOffice; track user.id) {
+              <div cListGroupItem class="users-unassigned-item">
+                <div class="users-unassigned-item__main">
+                  <div class="users-user-cell">
+                    @if (hasUsableAvatar(user)) {
+                      <c-avatar
+                        class="users-avatar users-avatar--mobile"
+                        shape="rounded-circle"
+                        size="lg"
+                      >
+                        <img
+                          class="avatar-img"
+                          [src]="user.avatar!"
+                          [alt]="user.name"
+                          (error)="markAvatarBroken(user)"
+                        />
+                      </c-avatar>
+                    } @else {
+                      <c-avatar
+                        class="users-avatar users-avatar--mobile"
+                        color="primary"
+                        shape="rounded-circle"
+                        size="lg"
+                      >
+                        {{ initialsForUser(user) }}
+                      </c-avatar>
+                    }
+
+                    <div>
+                      <strong class="d-block">{{ user.name }}</strong>
+                      <span class="d-block text-body-secondary">{{ user.email }}</span>
+                    </div>
+                  </div>
+
+                  <div class="users-unassigned-item__badges">
+                    <c-badge [color]="roleBadgeColor(user.role)">
+                      {{ formatUserRole(user.role) }}
+                    </c-badge>
+                    <c-badge color="warning">No office</c-badge>
+                  </div>
+                </div>
+
+                <div class="users-actions users-actions--list">
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    type="button"
+                    (click)="openAssignOfficeModal(user)"
+                  >
+                    Set office
+                  </button>
+                  @if (user.role !== 'DIRECTORS') {
+                    <button
+                      class="btn btn-sm btn-outline-primary"
+                      type="button"
+                      (click)="promoteToDirector(user)"
+                    >
+                      Make Director
+                    </button>
+                  }
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    type="button"
+                    (click)="openDeleteModal(user)"
+                  >
+                    Soft delete
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
+
+<c-modal
+  [visible]="createModalVisible"
+  (visibleChange)="createModalVisible = $event"
+  alignment="center"
+  size="lg"
+>
+  <c-modal-header>
+    <h5 cModalTitle>Create user</h5>
+    <button
+      class="btn-close"
+      type="button"
+      aria-label="Close"
+      (click)="closeCreateModal()"
+    ></button>
+  </c-modal-header>
+  <c-modal-body>
+    <form [formGroup]="createUserForm" class="users-modal-form">
+      <div>
+        <label class="form-label" for="create-user-name">Full name</label>
+        <input
+          id="create-user-name"
+          class="form-control users-input"
+          type="text"
+          placeholder="e.g. Juan dela Cruz"
+          formControlName="name"
+        />
+      </div>
+
+      <div>
+        <label class="form-label" for="create-user-email">CHMSU email</label>
+        <input
+          id="create-user-email"
+          class="form-control users-input"
+          type="email"
+          placeholder="name@chmsu.edu.ph"
+          formControlName="email"
+        />
+      </div>
+
+      <div>
+        <label class="form-label" for="create-user-role">Role</label>
+        <select id="create-user-role" class="form-select users-input" formControlName="role">
+          @for (role of roleOptions; track role) {
+            <option [value]="role">{{ formatUserRole(role) }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label" for="create-user-office">Department / Office</label>
+        <select id="create-user-office" class="form-select users-input" formControlName="officeId">
+          <option value="">Assign later</option>
+          @for (office of offices; track office.id) {
+            <option [value]="office.id">{{ office.name }}</option>
+          }
+        </select>
+      </div>
+    </form>
+  </c-modal-body>
+  <c-modal-footer>
+    <button class="btn btn-outline-secondary" type="button" (click)="closeCreateModal()">
+      Cancel
+    </button>
+    <button class="btn btn-primary" type="button" [disabled]="isSubmitting" (click)="createUser()">
+      @if (isSubmitting) {
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      }
+      Create user
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<c-modal
+  [visible]="deleteModalVisible"
+  (visibleChange)="deleteModalVisible = $event"
+  alignment="center"
+>
+  <c-modal-header>
+    <h5 cModalTitle>Soft delete user</h5>
+    <button
+      class="btn-close"
+      type="button"
+      aria-label="Close"
+      (click)="closeDeleteModal()"
+    ></button>
+  </c-modal-header>
+  <c-modal-body>
+    <p class="mb-3 text-body-secondary">
+      Soft deleting <strong>{{ userPendingDelete?.name }}</strong> will block sign-in by setting the
+      account to <strong>INACTIVE</strong>.
+    </p>
+    <div class="users-delete-note">
+      <strong>What also happens:</strong>
+      <span>The user's department / office assignment is cleared.</span>
+      <span
+        >If the user is currently the head of an office, that head assignment is cleared too.</span
+      >
+    </div>
+  </c-modal-body>
+  <c-modal-footer>
+    <button class="btn btn-outline-secondary" type="button" (click)="closeDeleteModal()">
+      Cancel
+    </button>
+    <button
+      class="btn btn-danger"
+      type="button"
+      [disabled]="isSubmitting"
+      (click)="softDeleteSelectedUser()"
+    >
+      @if (isSubmitting) {
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      }
+      Soft delete
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<c-modal
+  [visible]="assignOfficeModalVisible"
+  (visibleChange)="assignOfficeModalVisible = $event"
+  alignment="center"
+>
+  <c-modal-header>
+    <h5 cModalTitle>Assign department / office</h5>
+    <button
+      class="btn-close"
+      type="button"
+      aria-label="Close"
+      (click)="closeAssignOfficeModal()"
+    ></button>
+  </c-modal-header>
+  <c-modal-body>
+    <p class="text-body-secondary mb-3">
+      Update the department / office for <strong>{{ selectedUser?.name }}</strong
+      >.
+    </p>
+
+    <form [formGroup]="assignOfficeForm">
+      <label class="form-label" for="assign-office-id">Department / Office</label>
+      <select id="assign-office-id" class="form-select users-input" formControlName="officeId">
+        <option value="" disabled>Select an office</option>
+        @for (office of offices; track office.id) {
+          <option [value]="office.id">{{ office.name }}</option>
+        }
+      </select>
+    </form>
+  </c-modal-body>
+  <c-modal-footer>
+    <button class="btn btn-outline-secondary" type="button" (click)="closeAssignOfficeModal()">
+      Cancel
+    </button>
+    <button
+      class="btn btn-primary"
+      type="button"
+      [disabled]="isSubmitting"
+      (click)="assignOffice()"
+    >
+      @if (isSubmitting) {
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      }
+      Save department
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<c-modal
+  [visible]="changeRoleModalVisible"
+  (visibleChange)="changeRoleModalVisible = $event"
+  alignment="center"
+>
+  <c-modal-header>
+    <h5 cModalTitle>Change role</h5>
+    <button
+      class="btn-close"
+      type="button"
+      aria-label="Close"
+      (click)="closeChangeRoleModal()"
+    ></button>
+  </c-modal-header>
+  <c-modal-body>
+    <p class="text-body-secondary mb-3">
+      Update the role for <strong>{{ selectedUser?.name }}</strong
+      >.
+    </p>
+
+    <form [formGroup]="changeRoleForm">
+      <label class="form-label" for="change-user-role">Role</label>
+      <select id="change-user-role" class="form-select users-input" formControlName="role">
+        @for (role of roleOptions; track role) {
+          <option [value]="role">{{ formatUserRole(role) }}</option>
+        }
+      </select>
+    </form>
+  </c-modal-body>
+  <c-modal-footer>
+    <button class="btn btn-outline-secondary" type="button" (click)="closeChangeRoleModal()">
+      Cancel
+    </button>
+    <button class="btn btn-primary" type="button" [disabled]="isSubmitting" (click)="changeRole()">
+      @if (isSubmitting) {
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      }
+      Save role
+    </button>
+  </c-modal-footer>
+</c-modal>

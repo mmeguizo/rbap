@@ -4,6 +4,20 @@
       <c-col [xs]="12" [md]="10" [lg]="7" [xl]="5">
         <c-card class="login-card border-0 overflow-hidden">
           <c-card-body class="p-4 p-md-5">
+            <!-- Success alert — shown after a successful registration redirect -->
+            @if (successMessage) {
+              <c-alert color="success" [dismissible]="true" (visibleChange)="dismissSuccess()" fade>
+                <strong>Welcome!</strong> {{ successMessage }}
+              </c-alert>
+            }
+
+            <!-- Error alert — shown on backend error OR failed form submit -->
+            @if (errorMessage) {
+              <c-alert color="danger" [dismissible]="true" (visibleChange)="dismissError()" fade>
+                <strong>Login failed:</strong> {{ errorMessage }}
+              </c-alert>
+            }
+
             <div class="login-card-glow"></div>
 
             <div class="login-header mb-4 text-center">
@@ -18,31 +32,121 @@
               </p>
             </div>
 
-            <form>
+            <!-- ── Email + Password form ── -->
+            <form [formGroup]="loginForm" (ngSubmit)="login()">
+              <!-- Email field -->
               <div class="mb-3">
                 <label class="form-label" for="email">Email address</label>
                 <input
                   id="email"
                   class="form-control form-control-lg login-input"
+                  [class.is-invalid]="emailControl?.invalid && emailControl?.touched"
                   type="email"
                   placeholder="name@chmsu.edu.ph"
                   autocomplete="email"
+                  formControlName="email"
                 />
+                @if (emailControl?.invalid && emailControl?.touched) {
+                  <div class="invalid-feedback">
+                    @if (emailControl?.errors?.['required']) {
+                      Email is required.
+                    } @else if (emailControl?.errors?.['email']) {
+                      Enter a valid email address.
+                    }
+                  </div>
+                }
               </div>
 
+              <!-- Password field with eye-toggle -->
               <div class="mb-4">
                 <label class="form-label" for="password">Password</label>
-                <input
-                  id="password"
-                  class="form-control form-control-lg login-input"
-                  type="password"
-                  placeholder="Enter your password"
-                  autocomplete="current-password"
-                />
+                <div class="input-group">
+                  <input
+                    id="password"
+                    class="form-control form-control-lg login-input"
+                    [class.is-invalid]="passwordControl?.invalid && passwordControl?.touched"
+                    [type]="showPassword ? 'text' : 'password'"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    formControlName="password"
+                  />
+                  <!-- Eye toggle button -->
+                  <button
+                    class="btn btn-outline-secondary password-toggle"
+                    type="button"
+                    (click)="togglePassword()"
+                    [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                    tabindex="-1"
+                  >
+                    @if (showPassword) {
+                      <!-- Eye-slash: password is visible, click to hide -->
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"
+                        />
+                        <path
+                          d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"
+                        />
+                        <path
+                          d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"
+                        />
+                      </svg>
+                    } @else {
+                      <!-- Eye: password is hidden, click to show -->
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"
+                        />
+                        <path
+                          d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"
+                        />
+                      </svg>
+                    }
+                  </button>
+                  @if (passwordControl?.invalid && passwordControl?.touched) {
+                    <div class="invalid-feedback">
+                      @if (passwordControl?.errors?.['required']) {
+                        Password is required.
+                      } @else if (passwordControl?.errors?.['minlength']) {
+                        Password must be at least 6 characters.
+                      }
+                    </div>
+                  }
+                </div>
               </div>
 
               <div class="d-grid gap-3">
-                <button class="btn btn-primary btn-lg login-button" type="button">Sign in</button>
+                <!-- Sign in button — shows spinner while loading -->
+                <button
+                  class="btn btn-primary btn-lg login-button"
+                  type="submit"
+                  [disabled]="isLoading"
+                >
+                  @if (isLoading) {
+                    <span
+                      class="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Signing in…
+                  } @else {
+                    Sign in
+                  }
+                </button>
 
                 <button
                   class="btn btn-lg google-login-button"
@@ -72,7 +176,12 @@
                   <span>Login with Google</span>
                 </button>
 
-                <a class="dashboard-preview" routerLink="/dashboard">Open dashboard shell</a>
+                <p class="text-center mb-0" style="font-size: 0.92rem; color: var(--rbap-muted)">
+                  Don't have an account?
+                  <a routerLink="/register" class="fw-semibold" style="color: #17321f"
+                    >Create one</a
+                  >
+                </p>
               </div>
             </form>
           </c-card-body>

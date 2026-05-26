@@ -53,3 +53,13 @@ export interface TokenResponse {
   access_token: string;
   refresh_token: string;
 }
+
+/**
+ * Prefill data returned after the backend verifies a short-lived Google registration token.
+ * The frontend uses this to fill the register form without trusting raw query params.
+ */
+export interface GoogleRegistrationContext {
+  email: string;
+  name: string;
+  avatar: string | null;
+}
