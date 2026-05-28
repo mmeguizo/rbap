@@ -1,0 +1,237 @@
+:host {
+  display: block;
+  padding-bottom: 2rem;
+}
+
+.print-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.print-loading {
+  min-height: 12rem;
+}
+
+.print-sheet {
+  padding: 1.5rem;
+  border: 1px solid var(--rbap-border);
+  border-radius: 1.5rem;
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgba(18, 28, 20, 0.06);
+  overflow: hidden;
+}
+
+.print-sheet__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.print-sheet__eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.75rem;
+  color: #8b6b1d;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.print-sheet__header h1 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(1.7rem, 2.8vw, 2.2rem);
+  font-weight: 700;
+}
+
+.print-section {
+  margin-bottom: 1.5rem;
+}
+
+.print-section h2 {
+  margin-bottom: 0.75rem;
+  color: #17321f;
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.print-table {
+  width: 100%;
+  margin-bottom: 0;
+  font-size: 0.76rem;
+}
+
+.print-table th {
+  background: rgba(23, 50, 31, 0.08);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.print-table td,
+.print-table th {
+  padding: 0.48rem 0.5rem;
+  vertical-align: top;
+}
+
+.print-table--basic th,
+.print-table--monitoring th {
+  width: 18%;
+}
+
+.print-table--basic td,
+.print-table--monitoring td {
+  font-size: 0.84rem;
+}
+
+.print-table--matrix th:nth-child(1) {
+  min-width: 7rem;
+}
+
+.print-table--matrix th:nth-child(2),
+.print-table--matrix th:nth-child(3),
+.print-table--matrix th:nth-child(4),
+.print-table--matrix th:nth-child(5),
+.print-table--matrix th:nth-child(6),
+.print-table--matrix th:nth-child(14) {
+  min-width: 12rem;
+}
+
+.print-table--matrix {
+  table-layout: fixed;
+}
+
+.print-table--matrix td,
+.print-table--matrix th {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  line-height: 1.3;
+}
+
+.print-table__status {
+  margin-top: 0.25rem;
+  color: var(--rbap-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.print-table__goal-row {
+  background: rgba(198, 165, 82, 0.08);
+}
+
+.print-table__objective-row {
+  background: rgba(22, 33, 24, 0.03);
+}
+
+.print-table__nested-label {
+  margin-top: 0.25rem;
+  color: var(--rbap-muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.print-section--footer {
+  display: grid;
+  gap: 1rem;
+}
+
+.print-signatures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.print-signatures article {
+  display: grid;
+  gap: 0.35rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(22, 33, 24, 0.28);
+}
+
+.print-signatures span,
+.print-signatures small {
+  color: var(--rbap-muted);
+}
+
+.print-preline {
+  white-space: pre-line;
+}
+
+@media (max-width: 767.98px) {
+  .print-toolbar,
+  .print-sheet__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .print-signatures {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  :host {
+    padding: 0;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+  }
+
+  .print-sheet {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .print-section {
+    break-inside: avoid;
+  }
+
+  .print-section h2 {
+    margin-bottom: 0.4rem;
+    font-size: 0.74rem;
+  }
+
+  .print-table {
+    font-size: 0.58rem;
+  }
+
+  .print-table td,
+  .print-table th {
+    padding: 0.2rem 0.24rem;
+  }
+
+  .print-table--basic td,
+  .print-table--monitoring td {
+    font-size: 0.66rem;
+  }
+
+  .print-table--matrix th,
+  .print-table--matrix td {
+    min-width: 0 !important;
+  }
+
+  .print-signatures {
+    gap: 0.7rem;
+  }
+
+  .print-signatures article {
+    padding-top: 0.75rem;
+  }
+}
+
+@page {
+  size: landscape;
+  margin: 0.6in;
+}

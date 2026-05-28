@@ -33,6 +33,11 @@ export class DefaultLayoutComponent {
         name: 'User Management',
         url: '/admin/users',
       });
+
+      items.push({
+        name: 'Office Management',
+        url: '/admin/offices',
+      });
     }
 
     return items;

@@ -1,0 +1,192 @@
+<c-row class="g-4">
+  @if (errorMessage) {
+    <c-col [xs]="12">
+      <c-alert color="danger" [dismissible]="true" (visibleChange)="dismissError()">
+        <strong>Could not load offices.</strong> {{ errorMessage }}
+      </c-alert>
+    </c-col>
+  }
+
+  @if (successMessage) {
+    <c-col [xs]="12">
+      <c-alert color="success" [dismissible]="true" (visibleChange)="dismissSuccess()">
+        {{ successMessage }}
+      </c-alert>
+    </c-col>
+  }
+
+  <c-col [xs]="12">
+    <nav class="offices-breadcrumb-wrap" aria-label="breadcrumb">
+      <c-breadcrumb>
+        <c-breadcrumb-item url="/dashboard">Home</c-breadcrumb-item>
+        <c-breadcrumb-item [active]="true">Office Management</c-breadcrumb-item>
+      </c-breadcrumb>
+    </nav>
+  </c-col>
+
+  <c-col [xs]="12">
+    <section class="offices-hero">
+      <div>
+        <span class="offices-kicker">Administration</span>
+        <h1>Office hierarchy and CRUD</h1>
+        <p class="mb-0">
+          Manage the university office structure from the org chart — assign office heads, set
+          parent offices, and keep the RBAP scope tree aligned with CHMSU departments.
+        </p>
+      </div>
+
+      <div class="offices-hero__actions">
+        <a class="btn btn-outline-secondary" routerLink="/admin/users">Manage users</a>
+        <button class="btn btn-primary" type="button" (click)="beginCreate()">New office</button>
+      </div>
+    </section>
+  </c-col>
+
+  <!-- ── Full-width office table ── -->
+  <c-col [xs]="12">
+    <c-card class="offices-card border-0">
+      <c-card-body class="p-4">
+        <div class="offices-card__header mb-4">
+          <div>
+            <h2 class="h5 mb-1">Organization structure</h2>
+            <p class="mb-0 text-body-secondary">
+              Hierarchy preview for RBAP visibility and approval routing.
+            </p>
+          </div>
+        </div>
+
+        @if (isLoading) {
+          <div class="offices-loading text-center py-5">
+            <span class="spinner-border text-secondary" role="status" aria-hidden="true"></span>
+            <p class="mt-3 mb-0 text-body-secondary">Loading offices...</p>
+          </div>
+        } @else if (hierarchyRows.length === 0) {
+          <div class="offices-empty py-4">
+            <h3 class="h6 mb-2">No offices found</h3>
+            <p class="mb-0 text-body-secondary">Create the first office to start the hierarchy.</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table align-middle offices-table mb-0">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 34%">Office</th>
+                  <th scope="col" style="width: 22%">Parent</th>
+                  <th scope="col" style="width: 20%">Head</th>
+                  <th scope="col" style="width: 10%">Level</th>
+                  <th scope="col" style="width: 14%" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of hierarchyRows; track row.office.id) {
+                  <tr>
+                    <td>
+                      <div class="offices-office-cell" [style.padding-left.rem]="row.depth * 1.25">
+                        <span class="offices-office-cell__dot"></span>
+                        <div>
+                          <strong class="d-block">{{ row.office.name }}</strong>
+                          <span class="small text-body-secondary">
+                            {{ row.office.status ?? 'ACTIVE' }}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ parentLabel(row.office) }}</td>
+                    <td>{{ row.office.head?.name ?? 'Unassigned' }}</td>
+                    <td>
+                      <c-badge color="info">{{ officeDepthLabel(row.depth) }}</c-badge>
+                    </td>
+                    <td class="text-end">
+                      <div class="offices-actions">
+                        <button
+                          class="btn btn-sm btn-outline-secondary"
+                          type="button"
+                          (click)="beginEdit(row.office)"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          class="btn btn-sm btn-outline-danger"
+                          type="button"
+                          (click)="deleteOffice(row.office)"
+                        >
+                          Archive
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
+
+<!-- ── Create / Edit office modal ── -->
+<c-modal
+  [visible]="formModalVisible"
+  (visibleChange)="formModalVisible = $event"
+  alignment="center"
+  size="lg"
+>
+  <c-modal-header>
+    <h5 cModalTitle>{{ selectedOffice ? 'Edit office' : 'New office' }}</h5>
+    <button class="btn-close" type="button" aria-label="Close" (click)="cancelEdit()"></button>
+  </c-modal-header>
+  <c-modal-body>
+    <p class="text-body-secondary mb-4">
+      Keep the office tree synchronized with the CHMSU organizational chart.
+    </p>
+
+    <form [formGroup]="officeForm" class="offices-form" id="office-form">
+      <div>
+        <label class="form-label" for="office-name">Office name</label>
+        <input
+          id="office-name"
+          class="form-control"
+          formControlName="name"
+          type="text"
+          placeholder="e.g. Office of the Vice President for Academic Affairs"
+        />
+      </div>
+
+      <div>
+        <label class="form-label" for="office-parent">Parent office</label>
+        <select id="office-parent" class="form-select" formControlName="parentId">
+          <option value="">Top-level office</option>
+          @for (office of availableParentOptions; track office.id) {
+            <option [value]="office.id">{{ office.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label" for="office-head">Office head</label>
+        <select id="office-head" class="form-select" formControlName="userId">
+          <option value="">No assigned head yet</option>
+          @for (user of activeUsers; track user.id) {
+            <option [value]="user.id">{{ userLabel(user) }}</option>
+          }
+        </select>
+      </div>
+    </form>
+  </c-modal-body>
+  <c-modal-footer>
+    <button class="btn btn-outline-secondary" type="button" (click)="cancelEdit()">Cancel</button>
+    <button
+      class="btn btn-primary"
+      type="submit"
+      form="office-form"
+      [disabled]="isSubmitting"
+      (click)="saveOffice()"
+    >
+      @if (isSubmitting) {
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      }
+      {{ selectedOffice ? 'Save changes' : 'Create office' }}
+    </button>
+  </c-modal-footer>
+</c-modal>

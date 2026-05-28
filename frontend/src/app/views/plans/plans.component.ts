@@ -15,16 +15,15 @@ import { PlansService } from '../../core/services/plans.service';
 import { getHttpErrorMessage } from '../../shared/utils/http-error.utils';
 import {
   canCreatePlan,
-  canReviewSubordinatePlans,
   formatDateTimeLabel,
   formatPlanStatus,
   getPlanStatusColor,
 } from '../../shared/utils/rbap.utils';
 import { OfficeSummary } from '../../types/office.types';
-import { PlanRecord, PlanSummaryResponse } from '../../types/rbap.types';
+import { PlanListQuery, PlanRecord, PlanStatus } from '../../types/rbap.types';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-plans',
   imports: [
     ReactiveFormsModule,
     RouterLink,
@@ -34,10 +33,10 @@ import { PlanRecord, PlanSummaryResponse } from '../../types/rbap.types';
     CardModule,
     GridModule,
   ],
-  templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss',
+  templateUrl: './plans.component.html',
+  styleUrl: './plans.component.scss',
 })
-export class DashboardComponent implements OnInit {
+export class PlansComponent implements OnInit {
   private readonly plansService = inject(PlansService);
   private readonly officeService = inject(OfficeService);
   private readonly authService = inject(AuthService);
@@ -47,35 +46,58 @@ export class DashboardComponent implements OnInit {
   protected readonly formatPlanStatus = formatPlanStatus;
   protected readonly getPlanStatusColor = getPlanStatusColor;
   protected readonly formatDateTimeLabel = formatDateTimeLabel;
+  protected readonly statusOptions: Array<PlanStatus | ''> = ['', 'DRAFT', 'SUBMITTED', 'APPROVED'];
 
-  protected summary: PlanSummaryResponse | null = null;
-  protected pendingApprovals: PlanRecord[] = [];
-  protected recentPlans: PlanRecord[] = [];
+  protected plans: PlanRecord[] = [];
   protected offices: OfficeSummary[] = [];
-
+  protected total = 0;
+  protected take = 10;
+  protected skip = 0;
   protected isLoading = true;
   protected errorMessage: string | null = null;
 
   protected readonly filterForm = this.fb.nonNullable.group({
     officeId: [''],
     planningYear: [''],
+    status: ['' as PlanStatus | ''],
   });
 
   async ngOnInit(): Promise<void> {
-    await this.loadDashboard();
+    await Promise.all([this.loadOffices(), this.loadPlans()]);
   }
 
   protected async applyFilters(): Promise<void> {
-    await this.loadDashboard();
+    this.skip = 0;
+    await this.loadPlans();
   }
 
   protected async clearFilters(): Promise<void> {
     this.filterForm.reset({
       officeId: '',
       planningYear: '',
+      status: '',
     });
 
-    await this.loadDashboard();
+    this.skip = 0;
+    await this.loadPlans();
+  }
+
+  protected async previousPage(): Promise<void> {
+    if (this.skip === 0 || this.isLoading) {
+      return;
+    }
+
+    this.skip = Math.max(0, this.skip - this.take);
+    await this.loadPlans();
+  }
+
+  protected async nextPage(): Promise<void> {
+    if (this.isLoading || this.skip + this.take >= this.total) {
+      return;
+    }
+
+    this.skip += this.take;
+    await this.loadPlans();
   }
 
   protected dismissError(): void {
@@ -86,70 +108,49 @@ export class DashboardComponent implements OnInit {
     return canCreatePlan(this.currentUser());
   }
 
-  protected showsReviewQueue(): boolean {
-    return canReviewSubordinatePlans(this.currentUser());
+  protected get rangeStart(): number {
+    return this.plans.length ? this.skip + 1 : 0;
   }
 
-  protected dashboardTitle(): string {
-    return this.showsReviewQueue()
-      ? 'Review and monitor action plans'
-      : 'Your office action plan tracker';
+  protected get rangeEnd(): number {
+    return this.skip + this.plans.length;
   }
 
-  protected dashboardDescription(): string {
-    return this.showsReviewQueue()
-      ? 'This dashboard combines summary metrics with subordinate plan review so directors, vice presidents, presidents, and admins can monitor the RBAP pipeline.'
-      : 'This dashboard focuses on your office plan progress so department heads can build, update, print, and submit their annual RBAP without seeing reviewer-only widgets.';
+  private async loadOffices(): Promise<void> {
+    try {
+      this.offices = await this.officeService.getAccessibleOffices();
+    } catch {
+      this.offices = [];
+    }
   }
 
-  private async loadDashboard(): Promise<void> {
+  private async loadPlans(): Promise<void> {
     this.isLoading = true;
     this.errorMessage = null;
 
     try {
-      const query = this.buildQuery();
-      const pendingApprovalsPromise = this.showsReviewQueue()
-        ? this.plansService.getPendingApprovals({
-            ...query,
-            take: 5,
-            skip: 0,
-          })
-        : Promise.resolve({
-            data: [] as PlanRecord[],
-            meta: { total: 0, take: 5, skip: 0, returned: 0 },
-          });
-
-      const [summary, pendingApprovals, recentPlans, offices] = await Promise.all([
-        this.plansService.getSummary(query),
-        pendingApprovalsPromise,
-        this.plansService.getPlans({
-          ...query,
-          take: 5,
-          skip: 0,
-        }),
-        this.officeService.getAccessibleOffices(),
-      ]);
-
-      this.summary = summary;
-      this.pendingApprovals = pendingApprovals.data;
-      this.recentPlans = recentPlans.data;
-      this.offices = offices;
+      const response = await this.plansService.getPlans(this.buildQuery());
+      this.plans = response.data;
+      this.total = response.meta.total;
     } catch (error: unknown) {
       this.errorMessage = getHttpErrorMessage(
         error,
-        'Dashboard data could not be loaded right now.',
+        'The RBAP plans workspace could not be loaded.',
       );
     } finally {
       this.isLoading = false;
     }
   }
 
-  private buildQuery(): { officeId?: string; planningYear?: number } {
-    const { officeId, planningYear } = this.filterForm.getRawValue();
+  private buildQuery(): PlanListQuery {
+    const { officeId, planningYear, status } = this.filterForm.getRawValue();
 
     return {
+      take: this.take,
+      skip: this.skip,
       officeId: officeId || undefined,
       planningYear: this.parseYear(planningYear),
+      status: status || undefined,
     };
   }
 

@@ -1,0 +1,124 @@
+:host {
+  display: block;
+}
+
+.offices-breadcrumb-wrap {
+  display: flex;
+  align-items: center;
+  min-height: 3rem;
+  padding-inline: 0.25rem;
+}
+
+.offices-breadcrumb-wrap .breadcrumb {
+  margin: 0;
+}
+
+.offices-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--rbap-border);
+  border-radius: 1.4rem;
+  background:
+    radial-gradient(circle at top right, rgba(198, 165, 82, 0.2), transparent 24%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 250, 246, 0.98) 100%);
+  box-shadow: 0 18px 42px rgba(18, 28, 20, 0.08);
+}
+
+.offices-kicker {
+  display: inline-flex;
+  margin-bottom: 0.85rem;
+  color: #8b6b1d;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.offices-hero h1 {
+  margin-bottom: 0.65rem;
+  font-size: clamp(1.9rem, 3vw, 2.45rem);
+  font-weight: 700;
+}
+
+.offices-hero p,
+.offices-card__header p {
+  color: var(--rbap-muted);
+}
+
+.offices-card {
+  border-radius: 1.25rem;
+  border: 1px solid var(--rbap-border);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 42px rgba(18, 28, 20, 0.06);
+}
+
+.offices-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.offices-actions {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.offices-empty {
+  min-height: 8rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.offices-table {
+  min-width: 700px;
+}
+
+.offices-loading {
+  min-height: 10rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.offices-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.offices-table th {
+  color: var(--rbap-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.offices-office-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.offices-office-cell__dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #17321f, #c6a552);
+  flex-shrink: 0;
+}
+
+@media (max-width: 991.98px) {
+  .offices-hero,
+  .offices-hero__actions,
+  .offices-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,0 +1,258 @@
+<c-row class="g-4">
+  <c-col [xs]="12">
+    <nav class="plans-breadcrumb-wrap" aria-label="breadcrumb">
+      <c-breadcrumb>
+        <c-breadcrumb-item url="/dashboard">Home</c-breadcrumb-item>
+        <c-breadcrumb-item [active]="true">RBAP Plans</c-breadcrumb-item>
+      </c-breadcrumb>
+    </nav>
+  </c-col>
+
+  <c-col [xs]="12">
+    <section class="plans-hero">
+      <div>
+        <span class="plans-kicker">RBAP Workspace</span>
+        <h1>Role-based action plans</h1>
+        <p class="mb-0">
+          This is the demo-friendly workspace for annual department plans. Each plan opens into a
+          sheet where the office can add goals, outputs, budgets, timelines, and verification fields
+          that match the backend RBAP model.
+        </p>
+      </div>
+
+      <div class="plans-hero__actions">
+        <a class="btn btn-outline-secondary" routerLink="/dashboard">Dashboard</a>
+        @if (canCreateNewPlan()) {
+          <a class="btn btn-primary" routerLink="/plans/new">Create plan</a>
+        }
+      </div>
+    </section>
+  </c-col>
+
+  <c-col [xs]="12">
+    @if (errorMessage) {
+      <c-alert color="danger" [dismissible]="true" (visibleChange)="dismissError()" fade>
+        <strong>Plans failed:</strong> {{ errorMessage }}
+      </c-alert>
+    }
+  </c-col>
+
+  <!-- ── Compact filter bar (full width) ── -->
+  <c-col [xs]="12">
+    <c-card class="plans-card border-0">
+      <c-card-body class="p-3 p-md-4">
+        <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+          <div class="plans-filter-bar">
+            <div class="plans-filter-bar__label">
+              <span class="fw-semibold small">Filter plans</span>
+            </div>
+
+            <div class="plans-filter-bar__field">
+              <label class="form-label visually-hidden" for="plans-office-id">Office</label>
+              <select
+                id="plans-office-id"
+                class="form-select form-select-sm"
+                formControlName="officeId"
+              >
+                <option value="">All offices</option>
+                @for (office of offices; track office.id) {
+                  <option [value]="office.id">{{ office.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="plans-filter-bar__field">
+              <label class="form-label visually-hidden" for="plans-planning-year">Year</label>
+              <input
+                id="plans-planning-year"
+                class="form-control form-select-sm"
+                formControlName="planningYear"
+                inputmode="numeric"
+                placeholder="Year (e.g. 2026)"
+                type="text"
+              />
+            </div>
+
+            <div class="plans-filter-bar__field">
+              <label class="form-label visually-hidden" for="plans-status">Status</label>
+              <select id="plans-status" class="form-select form-select-sm" formControlName="status">
+                <option value="">All statuses</option>
+                @for (status of statusOptions; track status) {
+                  @if (status) {
+                    <option [value]="status">{{ formatPlanStatus(status) }}</option>
+                  }
+                }
+              </select>
+            </div>
+
+            <div class="plans-filter-bar__actions">
+              <button class="btn btn-primary btn-sm" type="submit" [disabled]="isLoading">
+                Apply
+              </button>
+              <button
+                class="btn btn-outline-secondary btn-sm"
+                type="button"
+                (click)="clearFilters()"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </form>
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <!-- ── Full-width plans table ── -->
+  <c-col [xs]="12">
+    <c-card class="plans-card border-0">
+      <c-card-body class="p-4">
+        <div class="plans-table__header mb-4">
+          <div>
+            <h2 class="h5 mb-1">Visible RBAP sheets</h2>
+            <p class="mb-0 text-body-secondary">
+              Showing {{ rangeStart }}&ndash;{{ rangeEnd }} of {{ total }} accessible plans.
+            </p>
+          </div>
+
+          <div class="plans-pagination">
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              type="button"
+              (click)="previousPage()"
+              [disabled]="skip === 0 || isLoading"
+            >
+              Previous
+            </button>
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              type="button"
+              (click)="nextPage()"
+              [disabled]="isLoading || skip + take >= total"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        @if (isLoading) {
+          <div class="plans-loading text-center py-5">
+            <span class="spinner-border text-secondary" role="status" aria-hidden="true"></span>
+            <p class="mt-3 mb-0 text-body-secondary">Loading plans...</p>
+          </div>
+        } @else if (plans.length === 0) {
+          <div class="plans-empty">
+            <h3 class="h6 mb-2">No plans found</h3>
+            <p class="mb-0 text-body-secondary">
+              Change the filters or create the first draft RBAP plan for this office.
+            </p>
+          </div>
+        } @else {
+          <div class="table-responsive d-none d-lg-block">
+            <table class="table align-middle plans-table mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Office / Year</th>
+                  <th scope="col">Program / KRA</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Goals</th>
+                  <th scope="col">Updated</th>
+                  <th scope="col" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (plan of plans; track plan.id) {
+                  <tr>
+                    <td>
+                      <div class="plans-office-cell">
+                        <strong>{{ plan.office.name }}</strong>
+                        <span>{{ plan.planningYear }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="plans-program-cell">
+                        <strong>{{ plan.programProjectActivityKRA }}</strong>
+                        <span>{{ plan.breakthroughGoals }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <c-badge [color]="getPlanStatusColor(plan.status)">
+                        {{ formatPlanStatus(plan.status) }}
+                      </c-badge>
+                    </td>
+                    <td>{{ plan._count.goals }}</td>
+                    <td>{{ formatDateTimeLabel(plan.updatedAt) }}</td>
+                    <td class="text-end">
+                      <div class="plans-actions">
+                        <a
+                          class="btn btn-sm btn-outline-secondary"
+                          [routerLink]="['/plans', plan.id]"
+                        >
+                          Open
+                        </a>
+                        <a
+                          class="btn btn-sm btn-outline-secondary"
+                          [routerLink]="['/plans', plan.id, 'print']"
+                        >
+                          Print
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="plans-mobile-list d-grid d-lg-none">
+            @for (plan of plans; track plan.id) {
+              <article class="plans-mobile-card">
+                <div class="plans-mobile-card__header">
+                  <div>
+                    <div class="fw-semibold">{{ plan.office.name }}</div>
+                    <div class="text-body-secondary small">{{ plan.planningYear }}</div>
+                  </div>
+
+                  <c-badge [color]="getPlanStatusColor(plan.status)">
+                    {{ formatPlanStatus(plan.status) }}
+                  </c-badge>
+                </div>
+
+                <div class="plans-mobile-card__body">
+                  <div>
+                    <span>Program / KRA</span>
+                    <strong>{{ plan.programProjectActivityKRA }}</strong>
+                  </div>
+                  <div>
+                    <span>Breakthrough goal</span>
+                    <strong>{{ plan.breakthroughGoals }}</strong>
+                  </div>
+                  <div>
+                    <span>Goals</span>
+                    <strong>{{ plan._count.goals }}</strong>
+                  </div>
+                  <div>
+                    <span>Updated</span>
+                    <strong>{{ formatDateTimeLabel(plan.updatedAt) }}</strong>
+                  </div>
+                </div>
+
+                <div class="plans-actions plans-actions--mobile">
+                  <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/plans', plan.id]">
+                    Open
+                  </a>
+                  <a
+                    class="btn btn-sm btn-outline-secondary"
+                    [routerLink]="['/plans', plan.id, 'print']"
+                  >
+                    Print
+                  </a>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

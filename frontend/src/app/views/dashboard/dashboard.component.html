@@ -10,23 +10,281 @@
 
   <c-col [xs]="12">
     <section class="dashboard-hero">
-      <span class="dashboard-kicker">RBAP</span>
-      <h1>Dashboard</h1>
-      <p>
-        This is the blank admin dashboard shell. Backend-driven widgets, tables, and KPIs can be
-        added later without changing the frontend structure again.
-      </p>
+      <div>
+        <span class="dashboard-kicker">RBAP</span>
+        <h1>{{ dashboardTitle() }}</h1>
+        <p class="mb-0">
+          {{ dashboardDescription() }}
+        </p>
+      </div>
+
+      <div class="dashboard-hero__actions">
+        <a class="btn btn-outline-secondary" routerLink="/plans">Open plans workspace</a>
+        @if (canCreateNewPlan()) {
+          <a class="btn btn-primary" routerLink="/plans/new">Create a draft plan</a>
+        }
+      </div>
     </section>
   </c-col>
 
   <c-col [xs]="12">
-    <c-card class="dashboard-placeholder border-0 shadow-sm">
-      <c-card-body class="p-4 p-lg-5">
-        <h2 class="h4 mb-2">Ready for backend integration</h2>
-        <p class="text-body-secondary mb-0">
-          The sidebar, header, and route shell are in place. This view intentionally stays minimal
-          until you decide which backend endpoints should drive the first widgets.
-        </p>
+    @if (errorMessage) {
+      <c-alert color="danger" [dismissible]="true" (visibleChange)="dismissError()" fade>
+        <strong>Dashboard failed:</strong> {{ errorMessage }}
+      </c-alert>
+    }
+  </c-col>
+
+  <c-col [xs]="12" [xl]="4">
+    <c-card class="dashboard-card border-0">
+      <c-card-body class="p-4">
+        <div class="dashboard-card__header mb-3">
+          <h2 class="h5 mb-1">Filter visible plans</h2>
+          <p class="mb-0 text-body-secondary">
+            Narrow the dashboard to a planning year or one accessible office.
+          </p>
+        </div>
+
+        <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="dashboard-filter-form">
+          <div class="mb-3">
+            <label class="form-label" for="dashboard-office-id">Office</label>
+            <select id="dashboard-office-id" class="form-select" formControlName="officeId">
+              <option value="">All accessible offices</option>
+              @for (office of offices; track office.id) {
+                <option [value]="office.id">{{ office.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="dashboard-planning-year">Planning year</label>
+            <input
+              id="dashboard-planning-year"
+              class="form-control"
+              formControlName="planningYear"
+              inputmode="numeric"
+              placeholder="2026"
+              type="text"
+            />
+          </div>
+
+          <div class="dashboard-filter-form__actions">
+            <button class="btn btn-primary" type="submit" [disabled]="isLoading">Apply</button>
+            <button class="btn btn-outline-secondary" type="button" (click)="clearFilters()">
+              Reset
+            </button>
+          </div>
+        </form>
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col [xs]="12" [xl]="8">
+    @if (isLoading) {
+      <c-card class="dashboard-card border-0">
+        <c-card-body class="dashboard-loading p-5 text-center">
+          <span class="spinner-border text-secondary" role="status" aria-hidden="true"></span>
+          <p class="mt-3 mb-0 text-body-secondary">Loading dashboard summary...</p>
+        </c-card-body>
+      </c-card>
+    } @else if (summary; as currentSummary) {
+      <div class="dashboard-metrics">
+        <article class="metric-card metric-card--total">
+          <span>Total plans</span>
+          <strong>{{ currentSummary.overview.totalPlans }}</strong>
+        </article>
+
+        <article class="metric-card metric-card--draft">
+          <span>Draft plans</span>
+          <strong>{{ currentSummary.overview.draftPlans }}</strong>
+        </article>
+
+        <article class="metric-card metric-card--submitted">
+          <span>Submitted</span>
+          <strong>{{ currentSummary.overview.submittedPlans }}</strong>
+        </article>
+
+        <article class="metric-card metric-card--approved">
+          <span>Approved</span>
+          <strong>{{ currentSummary.overview.approvedPlans }}</strong>
+        </article>
+
+        @if (showsReviewQueue()) {
+          <article class="metric-card metric-card--pending">
+            <span>Pending your review</span>
+            <strong>{{ currentSummary.overview.pendingApprovalCount }}</strong>
+          </article>
+        }
+      </div>
+    }
+  </c-col>
+
+  @if (showsReviewQueue()) {
+    <c-col [xs]="12" [xl]="6">
+      <c-card class="dashboard-card border-0 h-100">
+        <c-card-body class="p-4">
+          <div class="dashboard-card__header mb-3">
+            <h2 class="h5 mb-1">Plans waiting for review</h2>
+            <p class="mb-0 text-body-secondary">
+              These come from subordinate offices through <strong>/plans/pending-approvals</strong>.
+            </p>
+          </div>
+
+          @if (isLoading) {
+            <div class="dashboard-inline-loading">
+              <span
+                class="spinner-border spinner-border-sm text-secondary"
+                aria-hidden="true"
+              ></span>
+              <span>Loading approvals...</span>
+            </div>
+          } @else if (pendingApprovals.length === 0) {
+            <div class="dashboard-empty">
+              <h3 class="h6 mb-2">Nothing is waiting</h3>
+              <p class="mb-0 text-body-secondary">
+                Submitted plans from subordinate offices will appear here.
+              </p>
+            </div>
+          } @else {
+            <div class="dashboard-list">
+              @for (plan of pendingApprovals; track plan.id) {
+                <article class="dashboard-list-item">
+                  <div>
+                    <div class="dashboard-list-item__title">
+                      {{ plan.office.name }} • {{ plan.planningYear }}
+                    </div>
+                    <div class="dashboard-list-item__meta">
+                      Submitted {{ formatDateTimeLabel(plan.submittedAt) }}
+                    </div>
+                  </div>
+
+                  <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/plans', plan.id]">
+                    Review
+                  </a>
+                </article>
+              }
+            </div>
+          }
+        </c-card-body>
+      </c-card>
+    </c-col>
+  }
+
+  <c-col [xs]="12" [xl]="showsReviewQueue() ? 6 : 12">
+    <c-card class="dashboard-card border-0 h-100">
+      <c-card-body class="p-4">
+        <div class="dashboard-card__header mb-3">
+          <h2 class="h5 mb-1">Latest visible plans</h2>
+          <p class="mb-0 text-body-secondary">
+            Quick jump list for the most recent RBAP sheets in your scope.
+          </p>
+        </div>
+
+        @if (isLoading) {
+          <div class="dashboard-inline-loading">
+            <span class="spinner-border spinner-border-sm text-secondary" aria-hidden="true"></span>
+            <span>Loading latest plans...</span>
+          </div>
+        } @else if (recentPlans.length === 0) {
+          <div class="dashboard-empty">
+            <h3 class="h6 mb-2">No plans yet</h3>
+            <p class="mb-0 text-body-secondary">
+              Create a draft plan first, then attach goals and objectives.
+            </p>
+          </div>
+        } @else {
+          <div class="dashboard-list">
+            @for (plan of recentPlans; track plan.id) {
+              <article class="dashboard-list-item dashboard-list-item--stacked">
+                <div>
+                  <div class="dashboard-list-item__title">
+                    {{ plan.office.name }} • {{ plan.planningYear }}
+                  </div>
+                  <div class="dashboard-list-item__meta">
+                    {{ plan.programProjectActivityKRA }}
+                  </div>
+                </div>
+
+                <div class="dashboard-list-item__actions">
+                  <c-badge [color]="getPlanStatusColor(plan.status)">
+                    {{ formatPlanStatus(plan.status) }}
+                  </c-badge>
+                  <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/plans', plan.id]">
+                    Open
+                  </a>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col [xs]="12" [xl]="6">
+    <c-card class="dashboard-card border-0 h-100">
+      <c-card-body class="p-4">
+        <div class="dashboard-card__header mb-3">
+          <h2 class="h5 mb-1">Visible by office</h2>
+          <p class="mb-0 text-body-secondary">
+            Snapshot of plan statuses per accessible department or office.
+          </p>
+        </div>
+
+        @if (summary?.byOffice?.length) {
+          <div class="dashboard-breakdown">
+            @for (entry of summary!.byOffice; track entry.officeId) {
+              <article class="dashboard-breakdown__item">
+                <div>
+                  <strong>{{ entry.officeName }}</strong>
+                  <span>
+                    {{ entry.draftPlans }} draft • {{ entry.submittedPlans }} submitted •
+                    {{ entry.approvedPlans }} approved
+                  </span>
+                </div>
+                <span>{{ entry.totalPlans }}</span>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="dashboard-empty">
+            <p class="mb-0 text-body-secondary">No office breakdown available yet.</p>
+          </div>
+        }
+      </c-card-body>
+    </c-card>
+  </c-col>
+
+  <c-col [xs]="12" [xl]="6">
+    <c-card class="dashboard-card border-0 h-100">
+      <c-card-body class="p-4">
+        <div class="dashboard-card__header mb-3">
+          <h2 class="h5 mb-1">Visible by planning year</h2>
+          <p class="mb-0 text-body-secondary">
+            Useful for demoing how the system compares current and previous planning cycles.
+          </p>
+        </div>
+
+        @if (summary?.byYear?.length) {
+          <div class="dashboard-breakdown">
+            @for (entry of summary!.byYear; track entry.planningYear) {
+              <article class="dashboard-breakdown__item">
+                <div>
+                  <strong>{{ entry.planningYear }}</strong>
+                  <span>
+                    {{ entry.draftPlans }} draft • {{ entry.submittedPlans }} submitted •
+                    {{ entry.approvedPlans }} approved
+                  </span>
+                </div>
+                <span>{{ entry.totalPlans }}</span>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="dashboard-empty">
+            <p class="mb-0 text-body-secondary">No yearly breakdown available yet.</p>
+          </div>
+        }
       </c-card-body>
     </c-card>
   </c-col>

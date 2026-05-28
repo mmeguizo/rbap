@@ -86,7 +86,7 @@ export class UsersComponent implements OnInit {
   });
 
   protected readonly assignOfficeForm = this.fb.group({
-    officeId: ['', [Validators.required]],
+    officeId: [''],
   });
 
   protected readonly changeRoleForm = this.fb.group({
@@ -246,8 +246,7 @@ export class UsersComponent implements OnInit {
   }
 
   protected async assignOffice(): Promise<void> {
-    if (this.assignOfficeForm.invalid || !this.selectedUser) {
-      this.assignOfficeForm.markAllAsTouched();
+    if (!this.selectedUser) {
       return;
     }
 
@@ -255,11 +254,13 @@ export class UsersComponent implements OnInit {
     this.errorMessage = null;
 
     try {
+      const officeId = this.assignOfficeForm.getRawValue().officeId?.trim() || undefined;
+
       await this.userService.assignOffice({
         userId: this.selectedUser.id,
-        officeId: this.assignOfficeForm.getRawValue().officeId!,
+        officeId,
       });
-      this.successMessage = 'Department / office assigned successfully.';
+      this.successMessage = officeId ? 'Office assignment updated.' : 'Office assignment cleared.';
       this.closeAssignOfficeModal();
       await this.reloadData();
     } catch (err: unknown) {
@@ -409,6 +410,10 @@ export class UsersComponent implements OnInit {
 
   protected canManageUser(user: ManagedUser): boolean {
     return user.status === 'ACTIVE';
+  }
+
+  protected officeLabel(user: Pick<ManagedUser, 'office'> | null | undefined): string {
+    return user?.office?.name?.trim() || 'No office yet';
   }
 
   private async loadInitialData(): Promise<void> {

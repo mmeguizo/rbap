@@ -58,6 +58,42 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'plans',
+        loadComponent: () =>
+          import('./views/plans/plans.component').then((module) => module.PlansComponent),
+        data: {
+          title: 'RBAP Plans',
+        },
+      },
+      {
+        path: 'plans/new',
+        loadComponent: () =>
+          import('./views/plans/plan-detail.component').then(
+            (module) => module.PlanDetailComponent,
+          ),
+        data: {
+          title: 'Create RBAP Plan',
+        },
+      },
+      {
+        path: 'plans/:id',
+        loadComponent: () =>
+          import('./views/plans/plan-detail.component').then(
+            (module) => module.PlanDetailComponent,
+          ),
+        data: {
+          title: 'Plan Details',
+        },
+      },
+      {
+        path: 'plans/:id/print',
+        loadComponent: () =>
+          import('./views/plans/plan-print.component').then((module) => module.PlanPrintComponent),
+        data: {
+          title: 'Printable RBAP Plan',
+        },
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./views/profile/profile.component').then((module) => module.ProfileComponent),
@@ -72,6 +108,17 @@ export const routes: Routes = [
           import('./views/admin/users/users.component').then((module) => module.UsersComponent),
         data: {
           title: 'User Management',
+        },
+      },
+      {
+        path: 'admin/offices',
+        canActivate: [adminRoleGuard],
+        loadComponent: () =>
+          import('./views/admin/offices/offices.component').then(
+            (module) => module.OfficesComponent,
+          ),
+        data: {
+          title: 'Office Management',
         },
       },
     ],

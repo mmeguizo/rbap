@@ -1,0 +1,197 @@
+<div class="print-toolbar d-print-none">
+  <a class="btn btn-outline-secondary" [routerLink]="['/plans', plan?.id]">Back to plan</a>
+  <button class="btn btn-primary" type="button" (click)="printPage()">Print sheet</button>
+</div>
+
+@if (errorMessage) {
+  <c-alert
+    class="d-print-none"
+    color="danger"
+    [dismissible]="true"
+    (visibleChange)="dismissError()"
+    fade
+  >
+    <strong>Print view failed:</strong> {{ errorMessage }}
+  </c-alert>
+}
+
+@if (isLoading) {
+  <section class="print-loading text-center py-5 d-print-none">
+    <span class="spinner-border text-secondary" role="status" aria-hidden="true"></span>
+    <p class="mt-3 mb-0 text-body-secondary">Loading printable RBAP sheet...</p>
+  </section>
+} @else if (plan; as currentPlan) {
+  <section class="print-sheet">
+    <header class="print-sheet__header">
+      <div>
+        <span class="print-sheet__eyebrow">Carlos Hilado Memorial State University</span>
+        <h1>RESULTS-BASED ACTION PLAN</h1>
+        <p class="mb-0">For FY {{ currentPlan.planningYear }}</p>
+      </div>
+
+      <div class="print-sheet__status">
+        <c-badge [color]="getPlanStatusColor(currentPlan.status)">
+          {{ formatPlanStatus(currentPlan.status) }}
+        </c-badge>
+      </div>
+    </header>
+
+    <section class="print-section">
+      <h2>A. Basic Information</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered print-table print-table--basic">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Campus</td>
+              <td>{{ currentPlan.campus }}</td>
+            </tr>
+            <tr>
+              <td>Office/Unit</td>
+              <td>{{ currentPlan.office.name }}</td>
+            </tr>
+            <tr>
+              <td>Program/Project/Activity/KRA</td>
+              <td>{{ currentPlan.programProjectActivityKRA }}</td>
+            </tr>
+            <tr>
+              <td>Strategic Alignment/Planning Document</td>
+              <td>{{ currentPlan.strategicAlignment }}</td>
+            </tr>
+            <tr>
+              <td>Breakthrough Goals</td>
+              <td>{{ currentPlan.breakthroughGoals }}</td>
+            </tr>
+            <tr>
+              <td>Strategic Objectives</td>
+              <td>{{ currentPlan.strategicObjectives }}</td>
+            </tr>
+            <tr>
+              <td>Planning Year</td>
+              <td>{{ currentPlan.planningYear }}</td>
+            </tr>
+            <tr>
+              <td>Date Prepared</td>
+              <td>{{ formatDateLabel(currentPlan.datePrepared) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="print-section">
+      <h2>B. Results-Based Action Plan Matrix</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered print-table print-table--matrix">
+          <thead>
+            <tr>
+              <th>Result Level</th>
+              <th>Target Result (SMART)</th>
+              <th>Key Actions/Activities</th>
+              <th>Key Risk</th>
+              <th>Mitigation/Control Measures</th>
+              <th>Key Performance Output/Outcome Indicators</th>
+              <th>Target</th>
+              <th>Responsible Office/Person</th>
+              <th>Timeline</th>
+              <th>Fund Source</th>
+              <th>Budget Requirements</th>
+              <th>Budget Allocation</th>
+              <th>Budget Deficit</th>
+              <th>Means of Verification (MOV)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (goal of goals; track goal.id) {
+              <tr class="print-table__goal-row">
+                <td>
+                  <strong>{{ goal.resultLevel }}</strong>
+                  <div class="print-table__status">{{ formatRbapItemStatus(goal.status) }}</div>
+                </td>
+                <td>{{ goal.targetResult }}</td>
+                <td>{{ goal.keyActions }}</td>
+                <td>{{ goal.keyRisk }}</td>
+                <td>{{ goal.mitigationMeasures }}</td>
+                <td>{{ goal.keyPerformanceIndicator }}</td>
+                <td>{{ goal.target }}</td>
+                <td>{{ goal.responsibleOfficePerson }}</td>
+                <td>{{ goal.timeline }}</td>
+                <td>{{ goal.fundSource || 'Not set' }}</td>
+                <td>{{ formatCurrencyAmount(goal.budgetRequirements) }}</td>
+                <td>{{ formatCurrencyAmount(goal.budgetAllocation) }}</td>
+                <td>{{ formatCurrencyAmount(getBudgetDeficit(goal)) }}</td>
+                <td>{{ goal.meansOfVerification }}</td>
+              </tr>
+
+              @for (objective of goalObjectives(goal.id); track objective.id) {
+                <tr class="print-table__objective-row">
+                  <td>
+                    <strong>{{ objective.resultLevel }}</strong>
+                    <div class="print-table__nested-label">Objective row</div>
+                    <div class="print-table__status">
+                      {{ formatRbapItemStatus(objective.status) }}
+                    </div>
+                  </td>
+                  <td>{{ objective.targetResult }}</td>
+                  <td>{{ objective.keyActions }}</td>
+                  <td>{{ objective.keyRisk }}</td>
+                  <td>{{ objective.mitigationMeasures }}</td>
+                  <td>{{ objective.keyPerformanceIndicator }}</td>
+                  <td>{{ objective.target }}</td>
+                  <td>{{ objective.responsibleOfficePerson }}</td>
+                  <td>{{ objective.timeline }}</td>
+                  <td>{{ objective.fundSource || 'Not set' }}</td>
+                  <td>{{ formatCurrencyAmount(objective.budgetRequirements) }}</td>
+                  <td>{{ formatCurrencyAmount(objective.budgetAllocation) }}</td>
+                  <td>{{ formatCurrencyAmount(getBudgetDeficit(objective)) }}</td>
+                  <td>{{ objective.meansOfVerification }}</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="print-section print-section--footer">
+      <h2>C. Monitoring</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered print-table print-table--monitoring">
+          <tbody>
+            <tr>
+              <th>Monitoring Frequency</th>
+              <td>{{ currentPlan.monitoringFrequency }}</td>
+              <th>Reporting Office</th>
+              <td class="print-preline">
+                {{ currentPlan.reportingOffice || currentPlan.office.name }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="print-signatures">
+        <article>
+          <span>Prepared by:</span>
+          <strong>{{ currentPlan.createdBy.name }}</strong>
+          <small>{{ currentPlan.createdBy.role }}</small>
+        </article>
+        <article>
+          <span>Reviewed by:</span>
+          <strong>Division/Unit Head/Dean</strong>
+          <small>Reviewer to be assigned in workflow</small>
+        </article>
+        <article>
+          <span>Approved by:</span>
+          <strong>Vice President / SUC III President</strong>
+          <small>Final approval is role-based in the system</small>
+        </article>
+      </div>
+    </section>
+  </section>
+}

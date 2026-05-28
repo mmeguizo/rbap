@@ -27,7 +27,7 @@ export interface CreateManagedUserDto {
 
 export interface AssignOfficePayload {
   userId: string;
-  officeId: string;
+  officeId?: string | null;
 }
 
 export interface ChangeRolePayload {

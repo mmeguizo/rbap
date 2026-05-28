@@ -1,4 +1,5 @@
 import type { UserRole } from './auth.types';
+import type { PaginatedResponse } from './api.types';
 
 export interface OfficeSummary {
   id: string;
@@ -13,3 +14,20 @@ export interface OfficeSummary {
     role: UserRole;
   } | null;
 }
+
+export interface OfficeRecord extends OfficeSummary {
+  createdAt: string;
+  members?: Array<{ id: string }>;
+}
+
+export interface CreateOfficePayload {
+  name: string;
+  userId?: string;
+  parentId?: string;
+}
+
+export interface UpdateOfficePayload extends CreateOfficePayload {
+  officeId: string;
+}
+
+export type OfficeListResponse = PaginatedResponse<OfficeRecord>;

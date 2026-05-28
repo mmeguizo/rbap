@@ -16,6 +16,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { httpErrorInterceptor } from './core/interceptors/http-error.interceptor';
 import { AuthService } from './core/services/auth.service';
 
 export const appConfig: ApplicationConfig = {
@@ -34,9 +35,9 @@ export const appConfig: ApplicationConfig = {
       withHashLocation(),
     ),
 
-    // HTTP client with the auth interceptor.
-    // The interceptor automatically attaches the Bearer token to every request.
-    provideHttpClient(withInterceptors([authInterceptor])),
+    // HTTP client with auth + error interceptors.
+    // authInterceptor attaches the Bearer token; httpErrorInterceptor handles 401 → redirect to login.
+    provideHttpClient(withInterceptors([authInterceptor, httpErrorInterceptor])),
 
     provideAnimationsAsync(),
 

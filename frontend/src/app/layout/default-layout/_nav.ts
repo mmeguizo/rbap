@@ -8,4 +8,11 @@ export const navItems: INavData[] = [
       routerLinkActiveOptions: { exact: true },
     },
   },
+  {
+    name: 'RBAP Plans',
+    url: '/plans',
+    linkProps: {
+      routerLinkActiveOptions: { exact: true },
+    },
+  },
 ];

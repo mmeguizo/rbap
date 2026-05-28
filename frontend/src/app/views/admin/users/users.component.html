@@ -1,12 +1,13 @@
 <c-row class="g-4">
+  <!-- ── Hero ── -->
   <c-col [xs]="12">
     <section class="users-hero">
       <div>
         <span class="users-kicker">Admin</span>
         <h1>User management</h1>
         <p class="mb-0">
-          This page uses the admin <strong>/user</strong> endpoints to create accounts, search by ID
-          or email, change roles, assign departments, promote directors, and soft delete access.
+          Create accounts, search by ID or email, change roles, assign offices, and soft-delete
+          access using the <strong>/user</strong> admin endpoints.
         </p>
       </div>
 
@@ -30,139 +31,141 @@
     }
   </c-col>
 
-  <c-col [xs]="12" [xl]="4">
+  <!-- ── Quick Lookup (compact full-width bar) ── -->
+  <c-col [xs]="12">
     <c-card class="users-card border-0">
       <c-card-body class="p-4">
-        <div class="users-card__intro mb-4">
-          <h2 class="h5 mb-1">Lookup user</h2>
-          <p class="mb-0">
-            Uses <strong>/user/user-id</strong> and <strong>/user/user-email</strong>.
-          </p>
+        <div class="users-lookup-bar">
+          <div class="users-lookup-bar__intro">
+            <h2 class="h6 mb-1 fw-semibold">Quick lookup</h2>
+            <p class="mb-0 text-body-secondary small">
+              Find by <strong>/user/user-id</strong> or <strong>/user/user-email</strong>
+            </p>
+          </div>
+
+          <div class="users-lookup-bar__forms">
+            <form [formGroup]="lookupByIdForm" (ngSubmit)="searchById()">
+              <div class="input-group">
+                <span class="input-group-text text-body-secondary small">ID</span>
+                <input
+                  id="lookup-user-id"
+                  class="form-control"
+                  type="text"
+                  placeholder="cm..."
+                  formControlName="userId"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="submit"
+                  [disabled]="isLookupLoading"
+                >
+                  Find
+                </button>
+              </div>
+            </form>
+
+            <form [formGroup]="lookupByEmailForm" (ngSubmit)="searchByEmail()">
+              <div class="input-group">
+                <span class="input-group-text text-body-secondary small">Email</span>
+                <input
+                  id="lookup-email"
+                  class="form-control"
+                  type="email"
+                  placeholder="name@chmsu.edu.ph"
+                  formControlName="email"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="submit"
+                  [disabled]="isLookupLoading"
+                >
+                  Find
+                </button>
+              </div>
+            </form>
+
+            @if (isLookupLoading) {
+              <span
+                class="spinner-border spinner-border-sm text-secondary align-self-center"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+          </div>
         </div>
 
-        <form [formGroup]="lookupByIdForm" (ngSubmit)="searchById()" class="mb-4">
-          <label class="form-label" for="lookup-user-id">User ID</label>
-          <div class="input-group">
-            <input
-              id="lookup-user-id"
-              class="form-control users-input"
-              [class.is-invalid]="
-                lookupByIdForm.get('userId')?.invalid && lookupByIdForm.get('userId')?.touched
-              "
-              type="text"
-              placeholder="cm..."
-              formControlName="userId"
-            />
-            <button class="btn btn-outline-secondary" type="submit" [disabled]="isLookupLoading">
-              Find
-            </button>
-          </div>
-        </form>
-
-        <form [formGroup]="lookupByEmailForm" (ngSubmit)="searchByEmail()" class="mb-4">
-          <label class="form-label" for="lookup-email">CHMSU email</label>
-          <div class="input-group">
-            <input
-              id="lookup-email"
-              class="form-control users-input"
-              [class.is-invalid]="
-                lookupByEmailForm.get('email')?.invalid && lookupByEmailForm.get('email')?.touched
-              "
-              type="email"
-              placeholder="name@chmsu.edu.ph"
-              formControlName="email"
-            />
-            <button class="btn btn-outline-secondary" type="submit" [disabled]="isLookupLoading">
-              Find
-            </button>
-          </div>
-        </form>
-
         @if (lookupUser) {
-          <div class="lookup-result">
-            <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
-              <div class="d-flex align-items-start gap-3">
-                @if (hasUsableAvatar(lookupUser)) {
-                  <c-avatar
-                    class="users-avatar users-avatar--lookup"
-                    shape="rounded-circle"
-                    size="xl"
-                  >
-                    <img
-                      class="avatar-img"
-                      [src]="lookupUser.avatar!"
-                      [alt]="lookupUser.name"
-                      (error)="markAvatarBroken(lookupUser)"
-                    />
-                  </c-avatar>
-                } @else {
-                  <c-avatar
-                    class="users-avatar users-avatar--lookup"
-                    color="primary"
-                    shape="rounded-circle"
-                    size="xl"
-                  >
-                    {{ initialsForUser(lookupUser) }}
-                  </c-avatar>
-                }
+          <div class="users-lookup-result mt-4">
+            <div class="d-flex align-items-center flex-wrap gap-3">
+              @if (hasUsableAvatar(lookupUser)) {
+                <c-avatar
+                  class="users-avatar users-avatar--lookup flex-shrink-0"
+                  shape="rounded-circle"
+                  size="xl"
+                >
+                  <img
+                    class="avatar-img"
+                    [src]="lookupUser.avatar!"
+                    [alt]="lookupUser.name"
+                    (error)="markAvatarBroken(lookupUser)"
+                  />
+                </c-avatar>
+              } @else {
+                <c-avatar
+                  class="users-avatar users-avatar--lookup flex-shrink-0"
+                  color="primary"
+                  shape="rounded-circle"
+                  size="xl"
+                >
+                  {{ initialsForUser(lookupUser) }}
+                </c-avatar>
+              }
 
-                <div>
-                  <h3 class="h6 mb-1">{{ lookupUser.name }}</h3>
-                  <p class="mb-0 text-body-secondary">{{ lookupUser.email }}</p>
-                </div>
+              <div class="flex-grow-1" style="min-width: 0">
+                <div class="fw-semibold">{{ lookupUser.name }}</div>
+                <div class="text-body-secondary small">{{ lookupUser.email }}</div>
+                <div class="text-body-secondary small font-monospace">{{ lookupUser.id }}</div>
               </div>
 
-              <button class="btn btn-sm btn-link p-0" type="button" (click)="clearLookup()">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <c-badge [color]="roleBadgeColor(lookupUser.role)">
+                  {{ formatUserRole(lookupUser.role) }}
+                </c-badge>
+                <c-badge [color]="lookupUser.status === 'ACTIVE' ? 'success' : 'secondary'">
+                  {{ lookupUser.status }}
+                </c-badge>
+                <span class="text-body-secondary small">{{ officeLabel(lookupUser) }}</span>
+              </div>
+
+              <button
+                class="btn btn-sm btn-outline-secondary ms-auto"
+                type="button"
+                (click)="clearLookup()"
+              >
                 Clear
               </button>
             </div>
-
-            <dl class="lookup-result__meta mb-0">
-              <div>
-                <dt>Role</dt>
-                <dd>
-                  <c-badge [color]="roleBadgeColor(lookupUser.role)">
-                    {{ formatUserRole(lookupUser.role) }}
-                  </c-badge>
-                </dd>
-              </div>
-              <div>
-                <dt>Status</dt>
-                <dd>
-                  <c-badge [color]="lookupUser.status === 'ACTIVE' ? 'success' : 'secondary'">
-                    {{ lookupUser.status }}
-                  </c-badge>
-                </dd>
-              </div>
-              <div>
-                <dt>Department / Office</dt>
-                <dd>{{ lookupUser.office?.name ?? 'Unassigned' }}</dd>
-              </div>
-            </dl>
-          </div>
-        } @else {
-          <div class="lookup-empty">
-            <p class="mb-0 text-body-secondary">
-              Search results appear here when you look up a user by ID or email.
-            </p>
           </div>
         }
       </c-card-body>
     </c-card>
   </c-col>
 
-  <c-col [xs]="12" [xl]="8">
+  <!-- ── All Users Table (full width) ── -->
+  <c-col [xs]="12">
     <c-card class="users-card border-0">
       <c-card-body class="p-4">
-        <div class="users-table__header mb-3">
+        <div class="users-table__header mb-4">
           <div>
             <h2 class="h5 mb-1">All users</h2>
-            <p class="mb-0">Backed by <strong>GET /user</strong> with take / skip pagination.</p>
+            <p class="mb-0 text-body-secondary">
+              Backed by <strong>GET /user</strong> with take / skip pagination.
+            </p>
           </div>
 
           <div class="users-pagination">
             <button
-              class="btn btn-outline-secondary"
+              class="btn btn-outline-secondary btn-sm"
               type="button"
               (click)="previousPage()"
               [disabled]="skip === 0 || isLoading"
@@ -170,10 +173,10 @@
               Previous
             </button>
             <span class="users-pagination__meta">
-              {{ users.length ? skip + 1 : 0 }}-{{ skip + users.length }}
+              {{ users.length ? skip + 1 : 0 }}&ndash;{{ skip + users.length }}
             </span>
             <button
-              class="btn btn-outline-secondary"
+              class="btn btn-outline-secondary btn-sm"
               type="button"
               (click)="nextPage()"
               [disabled]="users.length < take || isLoading"
@@ -184,26 +187,27 @@
         </div>
 
         @if (isLoading) {
-          <div class="users-loading text-center py-5">
+          <div class="users-state-block text-center py-5">
             <span class="spinner-border text-secondary" role="status" aria-hidden="true"></span>
             <p class="mt-3 mb-0 text-body-secondary">Loading users...</p>
           </div>
         } @else if (users.length === 0) {
-          <div class="users-empty">
+          <div class="users-state-block py-4">
             <h3 class="h6 mb-2">No users found</h3>
-            <p class="mb-0 text-body-secondary">The current page returned no user records.</p>
+            <p class="mb-0 text-body-secondary">The current page returned no records.</p>
           </div>
         } @else {
+          <!-- Desktop table -->
           <div class="table-responsive d-none d-lg-block">
-            <table class="table align-middle users-table mb-0">
+            <table class="table table-hover align-middle users-table mb-0">
               <thead>
                 <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Role</th>
-                  <th scope="col">Department / Office</th>
-                  <th scope="col">Status</th>
-                  <th scope="col" class="text-end">Actions</th>
+                  <th scope="col" style="width: 26%">Name</th>
+                  <th scope="col" style="width: 22%">Email</th>
+                  <th scope="col" style="width: 13%">Role</th>
+                  <th scope="col" style="width: 18%">Office</th>
+                  <th scope="col" style="width: 8%">Status</th>
+                  <th scope="col" style="width: 13%" class="text-end">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,20 +230,24 @@
                           </c-avatar>
                         }
 
-                        <div>
-                          <div class="fw-semibold">{{ user.name }}</div>
-                          <div class="small text-body-secondary">{{ user.id }}</div>
+                        <div style="min-width: 0">
+                          <div class="fw-semibold text-truncate">{{ user.name }}</div>
+                          <div class="small text-body-secondary text-truncate font-monospace">
+                            {{ user.id }}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td>{{ user.email }}</td>
+                    <td>
+                      <span class="text-truncate d-block">{{ user.email }}</span>
+                    </td>
                     <td>
                       <c-badge [color]="roleBadgeColor(user.role)">
                         {{ formatUserRole(user.role) }}
                       </c-badge>
                     </td>
                     <td>
-                      {{ user.office?.name ?? 'Unassigned' }}
+                      <span class="text-truncate d-block">{{ officeLabel(user) }}</span>
                     </td>
                     <td>
                       <c-badge [color]="user.status === 'ACTIVE' ? 'success' : 'secondary'">
@@ -249,15 +257,15 @@
                     <td class="text-end">
                       <div class="users-actions">
                         <button
-                          class="btn btn-sm btn-outline-secondary"
+                          class="btn btn-sm btn-outline-secondary users-action-btn"
                           type="button"
                           (click)="openAssignOfficeModal(user)"
                           [disabled]="!canManageUser(user)"
                         >
-                          Department
+                          Office
                         </button>
                         <button
-                          class="btn btn-sm btn-outline-secondary"
+                          class="btn btn-sm btn-outline-secondary users-action-btn"
                           type="button"
                           (click)="openChangeRoleModal(user)"
                           [disabled]="!canManageUser(user)"
@@ -266,15 +274,15 @@
                         </button>
                         @if (user.status === 'ACTIVE') {
                           <button
-                            class="btn btn-sm btn-outline-danger"
+                            class="btn btn-sm btn-outline-danger users-action-btn"
                             type="button"
                             (click)="openDeleteModal(user)"
                           >
-                            Soft delete
+                            Delete
                           </button>
                         } @else {
                           <button
-                            class="btn btn-sm btn-outline-success"
+                            class="btn btn-sm btn-outline-success users-action-btn"
                             type="button"
                             (click)="restoreUser(user)"
                           >
@@ -289,6 +297,7 @@
             </table>
           </div>
 
+          <!-- Mobile cards -->
           <div class="users-mobile-list d-grid d-lg-none">
             @for (user of users; track user.id) {
               <article class="users-mobile-card">
@@ -335,8 +344,8 @@
                     <strong>{{ formatUserRole(user.role) }}</strong>
                   </div>
                   <div>
-                    <span>Department / Office</span>
-                    <strong>{{ user.office?.name ?? 'Unassigned' }}</strong>
+                    <span>Office</span>
+                    <strong>{{ officeLabel(user) }}</strong>
                   </div>
                   <div>
                     <span>User ID</span>
@@ -387,6 +396,7 @@
     </c-card>
   </c-col>
 
+  <!-- ── Users without office ── -->
   <c-col [xs]="12">
     <c-card class="users-card border-0">
       <c-card-body class="p-4">
@@ -448,7 +458,7 @@
 
                 <div class="users-actions users-actions--list">
                   <button
-                    class="btn btn-sm btn-outline-secondary"
+                    class="btn btn-sm btn-outline-secondary users-action-btn"
                     type="button"
                     (click)="openAssignOfficeModal(user)"
                   >
@@ -456,7 +466,7 @@
                   </button>
                   @if (user.role !== 'DIRECTORS') {
                     <button
-                      class="btn btn-sm btn-outline-primary"
+                      class="btn btn-sm btn-outline-primary users-action-btn"
                       type="button"
                       (click)="promoteToDirector(user)"
                     >
@@ -464,7 +474,7 @@
                     </button>
                   }
                   <button
-                    class="btn btn-sm btn-outline-danger"
+                    class="btn btn-sm btn-outline-danger users-action-btn"
                     type="button"
                     (click)="openDeleteModal(user)"
                   >
@@ -531,7 +541,7 @@
       <div>
         <label class="form-label" for="create-user-office">Department / Office</label>
         <select id="create-user-office" class="form-select users-input" formControlName="officeId">
-          <option value="">Assign later</option>
+          <option value="">No office yet (assign later)</option>
           @for (office of offices; track office.id) {
             <option [value]="office.id">{{ office.name }}</option>
           }
@@ -620,7 +630,7 @@
     <form [formGroup]="assignOfficeForm">
       <label class="form-label" for="assign-office-id">Department / Office</label>
       <select id="assign-office-id" class="form-select users-input" formControlName="officeId">
-        <option value="" disabled>Select an office</option>
+        <option value="">No office yet</option>
         @for (office of offices; track office.id) {
           <option [value]="office.id">{{ office.name }}</option>
         }
@@ -640,7 +650,7 @@
       @if (isSubmitting) {
         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
       }
-      Save department
+      Save office
     </button>
   </c-modal-footer>
 </c-modal>

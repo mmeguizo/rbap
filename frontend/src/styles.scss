@@ -10,6 +10,8 @@
   --rbap-sidebar-accent: #c6a552;
   --rbap-border: rgba(22, 33, 24, 0.08);
   --rbap-shadow: 0 24px 60px rgba(16, 24, 17, 0.12);
+  --rbap-control-height: 2.7rem;
+  --rbap-control-radius: 0.85rem;
 }
 
 html,
@@ -20,6 +22,7 @@ body {
 body {
   margin: 0;
   font-family: 'Public Sans', 'Segoe UI', sans-serif;
+  line-height: 1.5;
   color: var(--rbap-ink);
   background:
     radial-gradient(circle at top left, rgba(198, 165, 82, 0.2), transparent 28%),
@@ -43,4 +46,80 @@ a {
 .header.header-sticky {
   background: rgba(248, 250, 247, 0.88);
   backdrop-filter: blur(14px);
+}
+
+.container-fluid {
+  max-width: 1640px;
+}
+
+.btn {
+  --cui-btn-padding-y: 0.58rem;
+  --cui-btn-padding-x: 0.95rem;
+  --cui-btn-font-size: 0.95rem;
+  --cui-btn-border-radius: 0.85rem;
+  font-weight: 600;
+}
+
+.btn-sm {
+  --cui-btn-padding-y: 0.36rem;
+  --cui-btn-padding-x: 0.72rem;
+  --cui-btn-font-size: 0.82rem;
+  --cui-btn-border-radius: 0.7rem;
+}
+
+.btn-primary {
+  --cui-btn-bg: #4f5ae0;
+  --cui-btn-border-color: #4f5ae0;
+  --cui-btn-hover-bg: #4350d1;
+  --cui-btn-hover-border-color: #4350d1;
+  --cui-btn-active-bg: #3947c0;
+  --cui-btn-active-border-color: #3947c0;
+  box-shadow: 0 14px 28px rgba(79, 90, 224, 0.18);
+}
+
+.form-control,
+.form-select {
+  min-height: var(--rbap-control-height);
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--rbap-control-radius);
+  border-color: rgba(22, 33, 24, 0.14);
+  background: rgba(250, 252, 249, 0.96);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: rgba(79, 90, 224, 0.45);
+  box-shadow: 0 0 0 0.2rem rgba(79, 90, 224, 0.12);
+}
+
+.input-group > .btn,
+.input-group > .form-control,
+.input-group > .form-select {
+  min-height: var(--rbap-control-height);
+}
+
+.table {
+  --cui-table-border-color: rgba(22, 33, 24, 0.09);
+  --cui-table-striped-bg: rgba(247, 250, 246, 0.82);
+}
+
+.table > :not(caption) > * > * {
+  padding: 0.75rem 0.85rem;
+}
+
+.table-responsive {
+  scrollbar-width: thin;
+}
+
+.badge {
+  padding: 0.38rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.dropdown-menu,
+.card {
+  border-radius: 1rem;
 }
