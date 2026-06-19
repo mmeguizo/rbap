@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/RegisterPage"));
+const AuthCallbackPage = lazy(() => import("@/pages/AuthCallbackPage"));
 const DashboardLayout = lazy(() => import("@/layouts/DashboardLayout"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
@@ -33,6 +34,7 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
