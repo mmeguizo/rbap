@@ -9,8 +9,9 @@ RBAP_IDM/
 ├── backend/          # NestJS v11 + Prisma v7 + PostgreSQL (main API)
 ├── frontend/         # Angular v20 + CoreUI (legacy, port 4200)
 ├── frontend_react/   # React 19 + Vite + Tailwind v4 + shadcn/ui (new, port 5173)
-└── shadcn/vite-monorepo/  # Experimental Turbo monorepo (active dev target)
-    └── apps/web/     # The web app with dashboard, auth, admin pages
+└── shadcn/vite-monorepo/  # Turbo monorepo — active dev target
+    └── apps/web/     # React app with dashboard, auth, admin pages
+    └── packages/ui/  # Shared shadcn/ui component library
 ```
 
 ## Build Commands
@@ -22,7 +23,7 @@ RBAP_IDM/
 | `backend/` | `npm run test` | Jest unit tests |
 | `backend/` | `npm run seed` | Seed DB |
 | `shadcn/vite-monorepo/apps/web/` | `npm run dev` | Vite dev (port 5173, proxies /api to :3000) |
-| `shadcn/vite-monorepo/apps/web/` | `npm run build` | TypeScript + Vite build |
+| `shadcn/vite-monorepo/apps/web/` | `npm run build` | `tsc -b && vite build` — zero TS errors required |
 | `shadcn/vite-monorepo/apps/web/` | `npm run lint` | Lint check (tsc + ESLint) |
 
 ## What's Built
@@ -32,56 +33,81 @@ RBAP_IDM/
 - Dev login: `POST /api/v1/auth/dev-login`
 - DashboardLayout with collapsible sidebar (avatar, nav, theme cycle, sign-out)
 - Session expiry detection (`isTokenExpired`), auto-redirect to login with `?expired=true`
-- All users/offices/plans/goals/objectives pages behind auth guards
-- **Header bar** with breadcrumb navigation + page title (`header-bar.tsx`)
-- **Sidebar** enhanced with RBAP IDM branding, user role display, collapse toggle (`sidebar.tsx`)
-- **Alert dialog** component (`@workspace/ui`) for confirmation prompts
+- All pages behind auth guards
+- **Header bar** with breadcrumb navigation + page title
+- **Sidebar** with RBAP IDM branding, user role display, collapse toggle; filters nav items by role hierarchy
+- **Alert dialog** component for confirmation prompts
 - **Empty state** component for consistent placeholder UI
+- **Error boundary** wraps protected routes
+- **Page transitions** — fade-in + slide-up animation on page content
+- **Responsive sidebar** — mobile overlay with backdrop, hamburger toggle on small screens
 
 ### Pages Built (React/shadcn monorepo)
 
 | Page | Route | Features |
 |---|---|---|
 | HomePage | `/` | **Live dashboard**: plan status donut chart, plans-by-office bar chart, budget overview with progress bar, pending approvals list, KPI stat cards (users, plans, budget, pending) |
+| MyPlansPage | `/my-plans` | Plans filtered to user's office only (P1) |
+| PendingApprovalsPage | `/pending-approvals` | Plans from subordinate offices with SUBMITTED status (P1) |
 | UsersPage | `/users` | Table + UserDetailModal (view/edit/deactivate/delete) |
 | OfficesPage | `/offices` | Table + OfficeDetailModal (name/head/parent/members/delete) |
 | PlansPage | `/plans` | Table + PlanDetailModal (create/view/edit/submit/approve/delete) |
-| GoalsPage | `/goals` | Table + GoalDetailModal (create/view/edit/delete) |
+| GoalsPage | `/goals` | Table with budget columns + progress bars + GoalDetailModal |
 | ObjectivesPage | `/objectives` | Table + ObjectiveDetailModal (create/view/edit/delete) |
 
 ### Plan → Goals → Objectives Hierarchy
-- `PlanDetailModal` now has an expandable Goals section at the top
+- `PlanDetailModal` has expandable Goals section with **goal completion progress bar**
 - Click a goal row to expand/collapse and see its objectives (fetched lazily)
 - Each goal/objective row has a ⋮ menu (View/Edit, Delete when DRAFT)
 - Add Goal / Add Objective buttons (visible when plan is DRAFT)
-- Child modals (`GoalDetailModal`, `ObjectiveDetailModal`) open as overlays on top
-- After any child CRUD, both the hierarchy list and parent page refresh
+- Child modals open as overlays on top; after any child CRUD, both hierarchy list and parent page refresh
 
-### UI Polish (P0)
-- **Confirmation dialogs** — `ConfirmDialog` component using `AlertDialog` wired into all destructive actions across modals and page-level dropdowns (delete, deactivate, submit, approve)
-- **Empty states** — `EmptyState` component integrated into all 5 list pages (Users, Plans, Goals, Objectives, Offices)
-- **Error boundary** — `ErrorBoundary` component wraps all protected routes
-- **Page transitions** — fade-in + slide-up animation on page content
-- **Responsive sidebar** — mobile overlay with backdrop, hamburger toggle on small screens
-- **Animation polish** — hover shadows on cards, loading skeletons, progress bar transitions
+### Budget & Progress (P1)
+- **GoalsPage** — Budget requirement + allocation columns with mini progress bars showing % funded
+- **PlanDetailModal** — Goal completion progress bar (completed / total goals) with color legend (NOT_STARTED amber, IN_PROGRESS blue, COMPLETED emerald)
+- **HomePage** — Budget overview card with total allocated vs required
+
+### Role-Based UI (P1)
+- **Sidebar filtering**: nav items hidden per role hierarchy:
+  - `OFFICE_HEAD(0)` → Dashboard, My Plans
+  - `DIRECTORS(1)`+ → +All Plans, Pending Approvals, Goals, Objectives
+  - `PRESIDENTS(3)`+ → +Offices
+  - `ADMIN(4)` → +Users
+- **MyPlansPage** — `/my-plans`, lists plans filtered to user's office
+- **PendingApprovalsPage** — `/pending-approvals`, lists SUBMITTED plans from subordinate offices
+- **Role-gated actions inside modals**:
+  - **PlanDetailModal** — Add Goal / Add Objective / Save / Submit / Delete: only for plan's owning office (OFFICE_HEAD+) or any office (PRESIDENTS/ADMIN). Approve: PRESIDENTS/ADMIN only.
+  - **GoalDetailModal** — Save / Delete: only for goal's owning office (OFFICE_HEAD+) or any office (PRESIDENTS/ADMIN)
+  - **ObjectiveDetailModal** — Save / Delete: only for objective's owning office (OFFICE_HEAD+) or any office (PRESIDENTS/ADMIN)
+  - **UserDetailModal** — Role change / Office assignment / Activate/Deactivate / Delete: ADMIN only
+  - **OfficeDetailModal** — Name/Head/Parent edits + Save / Delete: PRESIDENTS/ADMIN only
 
 ### Known Issues
 - `GET /user/user-id` throws 500 if `userId` query param missing
 - Pre-existing lint errors in `AuthContext.tsx` and `LoginPage.tsx` (setState in effect + context co-export) — not from this work
-- Build chunk size warning (~950 kB, recharts adds ~370 kB) — can be split with dynamic imports later
+- Build chunk size warning (~965 kB, recharts adds ~370 kB) — can be split with dynamic imports later
+
+### P0 Fixes Applied
+- **LoginPage** — removed dead links to `/forgot-password` and `/register` (routes don't exist yet)
+- **Sidebar** — Offices nav item restricted to ADMIN only (matching backend `@Roles('ADMIN')`)
+- **OfficeDetailModal** — edit controls gated by ADMIN role; read-only view for non-ADMIN
+- **PlanDetailModal** — removed `officesApi.getAll()` call (ADMIN-only, caused 403 for all other users)
+- **HomePage** — added error toast on dashboard data load failure; removed dead `activeUsers` code
+- **Error handling** — added `toast.error()` on silent catch blocks (goal/objective delete)
+- **Type cleanup** — removed unused `"destructive"` variant from STATUS_COLORS in goal/objective modals
 
 ## Next Steps (Priority Order)
 
-| Priority | Phase | What It Does |
-|---|---|---|
-| 🔴 P0 | Dashboard & Analytics | Replace dead stat cards with live charts, KPIs, budget tracking, pending approvals |
-| 🔴 P0 | UI Beautification | Premium sidebar with branding, breadcrumbs, header bar, animations, confirmation dialogs, proper empty states |
-| 🟠 P1 | Role-Based UI | Hide/show nav items and actions per role, add "My Plans" and "Pending Approvals" pages |
-| 🟠 P1 | Budget & Progress | Wire the existing budget fields into the UI, add progress bars and completion rings |
-| 🟡 P2 | Office Tree View | Visual org chart instead of flat table |
-| 🟡 P2 | Reporting & Export | PDF/Excel export matching your RBAP templates, import from Excel |
-| 🟢 P3 | Register, Notifications, Activity Log | Fill remaining functional gaps |
-| 🟢 P3 | Polish & QA | Error boundaries, form validation, responsive mobile, accessibility |
+| Priority | Phase | Status | What It Does |
+|---|---|---|---|
+| ✅ P0 | Dashboard & Analytics | Done | Live stat cards, donut chart, bar chart, budget overview, pending approvals; gap fixes: error toast on load failure, removed dead activeUsers code |
+| ✅ P0 | UI Beautification | Done | Premium sidebar, breadcrumbs, header, animations, confirm dialogs, empty states, error boundary; gap fixes: removed dead login links, fixed role mismatches on Offices/PlanDetailModal |
+| ✅ P1 | Role-Based UI | Done | Sidebar role filtering, My Plans, Pending Approvals, role-gated modal actions |
+| 🟠 P1 | Budget & Progress | In progress | Goal progress bar in PlanDetailModal done; budget columns in GoalsPage done; **remaining**: budget columns in PlansPage table |
+| 🟡 P2 | Office Tree View | Pending | Visual org chart instead of flat table |
+| 🟡 P2 | Reporting & Export | Pending | PDF/Excel export matching RBAP templates, import from Excel |
+| 🟢 P3 | Register, Notifications, Activity Log | Pending | Fill remaining functional gaps |
+| 🟢 P3 | Polish & QA | Pending | Error boundaries, form validation, responsive mobile, accessibility |
 
 ## Key Patterns
 
