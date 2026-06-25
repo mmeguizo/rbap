@@ -3,7 +3,7 @@ name: Auto Merge to Main
 on:
   push:
     branches-ignore:
-      - main # This prevents an infinite loop by ignoring pushes directly to main
+      - '*' # This prevents an infinite loop by ignoring pushes directly to main
 
 permissions:
   contents: write # Grants the workflow permission to push code back to the repository
