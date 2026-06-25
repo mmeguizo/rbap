@@ -1,6 +1,6 @@
 # RBAP IDM — Project Status
 
-> Last updated: 2026-06-23
+> Last updated: 2026-06-24
 
 ## Repo Structure
 
@@ -62,10 +62,12 @@ RBAP_IDM/
 - Add Goal / Add Objective buttons (visible when plan is DRAFT)
 - Child modals open as overlays on top; after any child CRUD, both hierarchy list and parent page refresh
 
-### Budget & Progress (P1)
+### Budget & Progress (P1 — Complete)
 - **GoalsPage** — Budget requirement + allocation columns with mini progress bars showing % funded
+- **PlansPage, MyPlansPage, PendingApprovalsPage** — Budget (₱) column with progress bar (% allocation vs requirement)
 - **PlanDetailModal** — Goal completion progress bar (completed / total goals) with color legend (NOT_STARTED amber, IN_PROGRESS blue, COMPLETED emerald)
-- **HomePage** — Budget overview card with total allocated vs required
+- **HomePage** — Budget overview card reads from `summary.overview` (no longer capped at 1000 goals via `goalsApi.browse`)
+- **Backend** — `getBudgetTotalsByPlanId()` uses Prisma `groupBy` for N+1-safe budget aggregation; all plan list endpoints return per-plan `budgetRequirements`/`budgetAllocation`
 
 ### Role-Based UI (P1)
 - **Sidebar filtering**: nav items hidden per role hierarchy:
@@ -82,28 +84,29 @@ RBAP_IDM/
   - **UserDetailModal** — Role change, Office assignment, Activate/Deactivate, Delete: ADMIN only
   - **OfficeDetailModal** — Name/Head/Parent edits + Save/Delete: ADMIN only
 
-### P0 Gap Fixes Applied
+### P0 Fixes Applied
 - **LoginPage** — removed dead links to `/forgot-password` and `/register` (routes don't exist yet)
 - **Sidebar** — Offices nav item restricted to ADMIN only (matching backend `@Roles('ADMIN')`)
 - **OfficeDetailModal** — edit controls gated by ADMIN role; read-only view for non-ADMIN
-- **PlanDetailModal** — removed `officesApi.getAll()` call (ADMIN-only, caused 403 for all other users)
-- **HomePage** — added error toast on dashboard data load failure; removed dead `activeUsers` code
-- **Error handling** — added `toast.error()` on silent catch blocks (goal/objective delete)
+- **PlanDetailModal** — removed `officesApi.getAll()` call (ADMIN-only, caused 403 for all other users); extracted `objectivesApi.getByGoal()` from `setExpandedGoals` updater (was a side-effect inside setState)
+- **HomePage** — added error toast on dashboard data load failure; removed dead `activeUsers` code; replaced `goalsApi.browse()` (capped at 1000) with summary endpoint budget data
+- **Error handling** — added `toast.error()` catch blocks to all mutation functions across 8 detail modals + 7 pages; zero `.catch(console.error)` patterns remain
+- **AuthContext** — replaced `window.location.href` with React Router `useNavigate()` for both expired-session redirect and logout
+- **Offices service** — added `select` to `findAll()` and `findAllPaginated()` to exclude `passwordHash`/`googleId` from member/head relations (data leak fix)
+- **Plans service** — budget aggregation via Prisma `groupBy` returned as `budgetRequirements`/`budgetAllocation` on `findAll()`, `findPendingApprovals()`, and `getSummary()`
 
 ### Known Issues
 - `GET /user/user-id` throws 500 if `userId` query param missing
 - Pre-existing lint errors in `AuthContext.tsx` and `LoginPage.tsx` (setState in effect + context co-export) — not from this work
 - Build chunk size warning (~965 kB, recharts adds ~370 kB) — can be split with dynamic imports later
-- Budget on HomePage capped at 1000 goals (hard limit on `goalsApi.browse`)
 
 ## Next Steps (Priority Order)
 
 | Priority | Phase | Status | What It Does |
 |---|---|---|---|
-| ✅ P0 | Dashboard & Analytics | Done | Live stat cards, donut chart, bar chart, budget overview, pending approvals; fixed error handling, dead code |
-| ✅ P0 | UI Beautification | Done | Premium sidebar, breadcrumbs, header, animations, confirm dialogs, empty states, error boundary; fixed role mismatches, dead login links |
+| ✅ P0 | Gap Fixes & Security | Done | Role gating, toast error handling, setState side-effect fix, auth navigate, data leak fix (passwordHash), budget aggregation |
+| ✅ P1 | Budget & Progress | Done | Budget columns across all plan tables, goal progress bars, HomePage budget from summary endpoint, N+1-safe backend aggregation |
 | ✅ P1 | Role-Based UI | Done | Sidebar role filtering, My Plans page, Pending Approvals page, role-gated modal actions |
-| 🟠 P1 | Budget & Progress | In progress | Goal progress bar in PlanDetailModal done; budget columns in GoalsPage done; **remaining**: budget columns in PlansPage table |
 | 🟡 P2 | Office Tree View | Pending | Visual org chart instead of flat table |
 | 🟡 P2 | Reporting & Export | Pending | PDF/Excel export matching RBAP templates, import from Excel |
 | 🟢 P3 | Register, Notifications, Activity Log | Pending | Fill remaining functional gaps |
